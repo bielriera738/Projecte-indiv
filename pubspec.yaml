@@ -1,0 +1,50 @@
+name: nutrivision_ai
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  csv: ^5.0.2
+  path_provider: ^2.0.15
+  flutter_svg: ^2.2.1
+  http: ^1.2.2
+  google_fonts: ^6.1.0
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.3
+  sqflite_common_ffi: ^2.3.2
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png" # 👈 asegúrate de que exista esta ruta
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#ffffff"
+    theme_color: "#4caf50"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 48
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/imagenfondo.png
+    - assets/images/Logo.svg
+    - assets/images/fondochat.png
+    

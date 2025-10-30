@@ -1,1 +1,2 @@
-"# Projecte-indiv" 
+ARCHIVO DE PRUEBA NUTRIVISION AI
+
