@@ -12,11 +12,22 @@ class _RecetasScreenState extends State<RecetasScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _mensajes = [];
 
+  @override
+  void initState() {
+    super.initState();
+    // Mostrar mensaje inicial al abrir el chat
+    Future.delayed(Duration.zero, () {
+      _enviarMensaje("inicio");
+    });
+  }
+
   void _enviarMensaje(String texto) {
     if (texto.isEmpty) return;
 
     setState(() {
-      _mensajes.add({"role": "user", "text": texto});
+      if (texto != "inicio") {
+        _mensajes.add({"role": "user", "text": texto});
+      }
       _controller.clear();
     });
 
@@ -30,38 +41,122 @@ class _RecetasScreenState extends State<RecetasScreen> {
 
   /// 📌 Generador de respuestas automáticas extendidas
   String _generarRespuesta(String texto) {
-    texto = texto.toLowerCase();
+    // Convertir a minúsculas y eliminar acentos para mejor detección
+    texto = texto.toLowerCase()
+        .replaceAll(RegExp(r'á'), 'a')
+        .replaceAll(RegExp(r'é'), 'e')
+        .replaceAll(RegExp(r'í'), 'i')
+        .replaceAll(RegExp(r'ó'), 'o')
+        .replaceAll(RegExp(r'ú'), 'u');
 
-    if (texto.contains("Quiero definición") || texto.contains("definición")) {
-      return "✅ *Plan Definición (Bajar grasa y mantener músculo)*\n\n"
-          "🍳 Desayuno: Tortilla de claras + avena 🥚\n"
-          "🍎 Snack: Yogur natural con manzana 🍏\n"
-          "🥗 Almuerzo: Pollo a la plancha con ensalada verde 🥗\n"
-          "🥜 Merienda: Batido de proteína + frutos secos 🥤\n"
-          "🐟 Cena: Salmón al horno con verduras al vapor 🐟\n"
-          "🌙 Snack nocturno: Requesón bajo en grasa con canela 🧀";
-    } else if (texto.contains("Quiero volumen") ||texto.contains("volumen")) {
-      return "💪 *Plan Volumen (Ganar músculo y fuerza)*\n\n"
-          "🥞 Desayuno: Avena con plátano + mantequilla de cacahuete 🍌🥜\n"
-          "🥤 Snack: Batido de proteína + leche entera 🥛\n"
-          "🍛 Almuerzo: Arroz con pollo y verduras 🍛\n"
-          "🥪 Merienda: Bocadillo integral de atún con aguacate 🥑\n"
-          "🍝 Cena: Pasta integral con atún y brócoli 🍝\n"
-          "🍫 Post-entreno: Batido de cacao con proteína y avena 🍫";
-    } else if (texto.contains("Quiero mantenimiento") ||texto.contains("mantenimiento")) {
-      return "⚖️ *Plan Mantenimiento (Equilibrio y energía estable)*\n\n"
-          "🥣 Desayuno: Yogur con granola y frutos rojos 🍓\n"
-          "🥜 Snack: Tostada integral con crema de almendras 🥜\n"
-          "🥩 Almuerzo: Filete de ternera con patata asada 🥩\n"
-          "🥗 Merienda: Ensalada de garbanzos con tomate y pepino 🥗\n"
-          "🐟 Cena: Ensalada de quinoa con salmón y aguacate 🥑\n"
-          "🍵 Infusión nocturna: Té verde o manzanilla 🌿";
+    // Patrones de búsqueda más flexibles
+    final patronesDesayuno = RegExp(r'desayun|breakfast|morning|mañana');
+    final patronesDefinicion = RegExp(r'defin|adelgaz|perder\s*peso|diet|cut|lean|bajar');
+    final patronesVolumen = RegExp(r'volum|masa|musc|bulk|ganar\s*peso|subir');
+    final patronesMantenimiento = RegExp(r'manten|mantener|equilibr|balanc');
+
+    if (patronesDesayuno.hasMatch(texto)) {
+      return "🌅 *Ideas para Desayunos Saludables:*\n\n"
+          "1. 🥑 Tostadas de aguacate:\n"
+          "   - Pan integral\n"
+          "   - Aguacate machacado\n"
+          "   - Huevo pochado\n"
+          "   - Semillas de chía\n\n"
+          "2. 🥣 Bowl de proteínas:\n"
+          "   - Yogur griego\n"
+          "   - Plátano y frutos rojos\n"
+          "   - Granola casera\n"
+          "   - Miel orgánica\n\n"
+          "3. 🥞 Tortitas proteicas:\n"
+          "   - Avena y claras\n"
+          "   - Proteína en polvo\n"
+          "   - Canela y vainilla\n"
+          "   - Sirope sin azúcar";
+
+    } else if (patronesDefinicion.hasMatch(texto)) {
+      return "✨ *Plan Definición Premium*\n\n"
+          "🍳 Desayuno (400 kcal):\n"
+          "- Tortilla de claras (4 claras)\n"
+          "- Avena (40g) con canela\n"
+          "- Café negro o té verde\n\n"
+          "🥗 Media mañana (200 kcal):\n"
+          "- Yogur griego 0%\n"
+          "- Frutos rojos\n"
+          "- 10 almendras\n\n"
+          "🥩 Almuerzo (500 kcal):\n"
+          "- Pechuga de pollo (150g)\n"
+          "- Ensalada completa\n"
+          "- Quinoa (50g)\n\n"
+          "🍎 Merienda (200 kcal):\n"
+          "- Batido de proteína\n"
+          "- Manzana verde\n\n"
+          "🐟 Cena (400 kcal):\n"
+          "- Merluza al horno\n"
+          "- Verduras al vapor\n"
+          "- Aceite de oliva (1 cdta)\n\n"
+          "💪 *Tips:* Bebe 3L agua/día, entrena 4-5 días/semana";
+
+    } else if (patronesVolumen.hasMatch(texto)) {
+      return "🏋️ *Plan Volumen Premium*\n\n"
+          "🥞 Desayuno (800 kcal):\n"
+          "- Avena (100g)\n"
+          "- 4 huevos enteros\n"
+          "- Plátano y miel\n"
+          "- Mantequilla de cacahuete\n\n"
+          "🥪 Media mañana (400 kcal):\n"
+          "- Pan integral\n"
+          "- Atún y aguacate\n"
+          "- Batido de proteínas\n\n"
+          "🍖 Almuerzo (900 kcal):\n"
+          "- Arroz integral (150g)\n"
+          "- Ternera (200g)\n"
+          "- Verduras salteadas\n"
+          "- Aceite de oliva\n\n"
+          "🥜 Post-entreno (400 kcal):\n"
+          "- Batido mass gainer\n"
+          "- Plátano\n"
+          "- Mix frutos secos\n\n"
+          "🍗 Cena (700 kcal):\n"
+          "- Salmón a la plancha (200g)\n"
+          "- Patata asada\n"
+          "- Brócoli al vapor\n"
+          "- Aceite de oliva (1 cdta)\n\n"
+          "💡 *Consejos:* Come cada 3 horas, entrena con pesas 4 veces/semana";
+
+    } else if (patronesMantenimiento.hasMatch(texto)) {
+      return "⚖️ *Plan Mantenimiento Equilibrado*\n\n"
+          "🥣 Desayuno (500 kcal):\n"
+          "- Yogur natural (200g)\n"
+          "- Granola (50g)\n"
+          "- Frutas del bosque\n"
+          "- Semillas de chía\n\n"
+          "🥜 Snack (250 kcal):\n"
+          "- Tostadas integrales (2) con aguacate\n"
+          "- Pavo o pollo fiambre\n\n"
+          "🥗 Almuerzo (600 kcal):\n"
+          "- Quinoa (100g) con verduras asadas\n"
+          "- Pechuga de pollo a la plancha (150g)\n"
+          "- Aceite de oliva (1 cdta)\n\n"
+          "🍎 Merienda (300 kcal):\n"
+          "- Batido de proteínas\n"
+          "- 1 plátano\n"
+          "- 30g de nueces\n\n"
+          "🐟 Cena (500 kcal):\n"
+          "- Pescado blanco al horno (200g)\n"
+          "- Puré de patata (100g)\n"
+          "- Espárragos a la plancha\n"
+          "- Aceite de oliva (1 cdta)\n\n"
+          "🌙 Snack nocturno (200 kcal):\n"
+          "- Requesón (150g) con canela\n"
+          "- 1 cucharadita de miel";
+
     } else {
       return "🤖 *Opciones disponibles:*\n\n"
-          "- Recetas para **definición** 🥗\n"
-          "- Recetas para **volumen** 💪\n"
-          "- Recetas para **mantenimiento ** 👨‍🔧\n"
-          "👉 Escríbeme tu objetivo y te daré un plan completo.";
+          "- Recetas para **definición/adelgazar** 🥗\n"
+          "- Recetas para **volumen/masa muscular** 💪\n"
+          "- Recetas para **mantenimiento** ⚖️\n"
+          "- Ideas de **desayunos** 🍳\n\n"
+          "👉 Escribe tu objetivo y te daré un plan completo.";
     }
   }
 
@@ -69,7 +164,15 @@ class _RecetasScreenState extends State<RecetasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Chat Nutricional Inteligente "),
+        title: const Text(
+          "Chef NutriVision AI",
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Pacifico', // Añade esta fuente a pubspec.yaml
+            color: Colors.tealAccent,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -78,10 +181,6 @@ class _RecetasScreenState extends State<RecetasScreen> {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/images/fondochat.png"), // 👈 tu imagen
-            fit: BoxFit.contain,
-          ),
         ),
         child: Column(
           children: [
@@ -121,10 +220,12 @@ class _RecetasScreenState extends State<RecetasScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      // Añadir manejo de la tecla Enter
+                      onSubmitted: (text) => _enviarMensaje(text),
                       decoration: const InputDecoration(
-                        hintText: "Escribe tu objetivo (ej: recetas para volumen)...",
+                        hintText: "Escribe tu objetivo o presiona Enter...",
                         filled: true,
-                        fillColor: Color(0xFF7FFFD4), // mismo azul translúcido
+                        fillColor: Color(0xFF7FFFD4),
                         border: OutlineInputBorder(),
                       ),
                     ),
