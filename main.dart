@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/menu.dart';
+import 'lib/screens/menu.dart';
 
 void main() {
   runApp(const NutriVisionApp());
