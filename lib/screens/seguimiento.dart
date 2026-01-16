@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class Seguimiento extends StatefulWidget {
-  const Seguimiento({super.key});
+class SeguimientoScreen extends StatefulWidget {
+  final String? username;
+  const SeguimientoScreen({this.username, super.key});
 
   @override
-  State<Seguimiento> createState() => _SeguimientoState();
+  State<SeguimientoScreen> createState() => _SeguimientoScreenState();
 }
 
-class _SeguimientoState extends State<Seguimiento> {
+class _SeguimientoScreenState extends State<SeguimientoScreen> {
   late Map<String, dynamic> _macrosObjetivo;
   late Map<String, dynamic> _macrosConsumidos;
   late TextEditingController _gramosController;
@@ -21,17 +22,16 @@ class _SeguimientoState extends State<Seguimiento> {
   int _selectedTabIndex = 0;
 
   final Map<String, Map<String, dynamic>> baseAlimentos = {
-    // Valores por 100 g (promedios realistas)
-    "pollo": {"nombre": "Pechuga de Pollo", "calorias": 165, "proteinas": 31.0, "carbs": 0.0, "grasas": 3.6},
-    "pavo": {"nombre": "Pechuga de Pavo", "calorias": 135, "proteinas": 29.0, "carbs": 0.0, "grasas": 1.0},
-    "pescado": {"nombre": "Salmón", "calorias": 208, "proteinas": 20.4, "carbs": 0.0, "grasas": 13.4},
-    "atun": {"nombre": "Atún (lata en agua)", "calorias": 132, "proteinas": 28.0, "carbs": 0.0, "grasas": 1.0},
-    "huevo": {"nombre": "Huevo (entero)", "calorias": 155, "proteinas": 13.0, "carbs": 1.1, "grasas": 11.0},
-    "arroz": {"nombre": "Arroz (blanco cocido)", "calorias": 130, "proteinas": 2.7, "carbs": 28.0, "grasas": 0.3},
-    "avena": {"nombre": "Avena (instantánea)", "calorias": 389, "proteinas": 16.6, "carbs": 66.2, "grasas": 6.9},
-    "pasta": {"nombre": "Pasta (cocida)", "calorias": 174, "proteinas": 7.5, "carbs": 34.4, "grasas": 1.1},
-    "papa": {"nombre": "Papa (cocida)", "calorias": 77, "proteinas": 1.7, "carbs": 17.0, "grasas": 0.1},
-    "aguacate": {"nombre": "Aguacate", "calorias": 160, "proteinas": 2.0, "carbs": 9.0, "grasas": 14.7},
+    "pollo": {"nombre": "Pechuga de Pollo", "calorias": 165, "proteinas": 31, "carbs": 0, "grasas": 3.6},
+    "pavo": {"nombre": "Pechuga de Pavo", "calorias": 135, "proteinas": 29, "carbs": 0, "grasas": 0.5},
+    "pescado": {"nombre": "Salmón", "calorias": 208, "proteinas": 20, "carbs": 0, "grasas": 13},
+    "atun": {"nombre": "Atún", "calorias": 132, "proteinas": 29, "carbs": 0, "grasas": 0.9},
+    "huevo": {"nombre": "Huevo", "calorias": 155, "proteinas": 13, "carbs": 1.1, "grasas": 11},
+    "arroz": {"nombre": "Arroz", "calorias": 130, "proteinas": 2.7, "carbs": 28, "grasas": 0.3},
+    "avena": {"nombre": "Avena", "calorias": 389, "proteinas": 16.6, "carbs": 66.2, "grasas": 6.9},
+    "pasta": {"nombre": "Pasta", "calorias": 174, "proteinas": 7.5, "carbs": 34.4, "grasas": 1.1},
+    "papa": {"nombre": "Papa", "calorias": 77, "proteinas": 1.7, "carbs": 17, "grasas": 0.1},
+    "aguacate": {"nombre": "Aguacate", "calorias": 160, "proteinas": 2, "carbs": 9, "grasas": 14.7},
   };
 
   @override
@@ -70,7 +70,8 @@ class _SeguimientoState extends State<Seguimiento> {
         final macros = perfil['macros'] as Map<String, dynamic>? ?? {};
         
         setState(() {
-          _nombreUsuario = perfil['nombre'] as String? ?? 'Usuario';
+          // Usa username pasado si existe, sino usa el guardado en SharedPreferences
+          _nombreUsuario = (widget.username != null && widget.username!.isNotEmpty) ? widget.username! : (perfil['nombre'] as String? ?? 'Usuario');
           _macrosObjetivo = {
             'calorias': (macros['calorias'] as num?)?.toDouble() ?? 2000.0,
             'proteinas': (macros['proteinas'] as num?)?.toDouble() ?? 150.0,
@@ -78,6 +79,10 @@ class _SeguimientoState extends State<Seguimiento> {
             'grasas': (macros['grasas'] as num?)?.toDouble() ?? 70.0,
           };
         });
+      } else {
+        if (widget.username != null && widget.username!.isNotEmpty) {
+          setState(() => _nombreUsuario = widget.username!);
+        }
       }
     } catch (e) {
       debugPrint("❌ Error cargando perfil: $e");

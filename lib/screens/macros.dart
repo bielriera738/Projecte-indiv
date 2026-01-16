@@ -57,7 +57,11 @@ Future<void> calcular() async {
       calorias = tdee.toInt();
     }
 
-    int proteinasG = (peso * 2.2).toInt();
+    // Proteínas más humanizadas: ajuste por objetivo
+    double proteinaPorKg = 1.6; // mantenimiento por defecto
+    if (objetivo == "Definición") proteinaPorKg = 2.0; // más alto en déficit
+    if (objetivo == "Volumen") proteinaPorKg = 1.8; // volumen moderado
+    int proteinasG = (peso * proteinaPorKg).toInt();
     int grasasG = (calorias * 0.25 / 9).toInt();
     int carbohidratosG = ((calorias - (proteinasG * 4 + grasasG * 9)) / 4).toInt();
     carbohidratosG = carbohidratosG < 0 ? 0 : carbohidratosG; // Evitar negativos

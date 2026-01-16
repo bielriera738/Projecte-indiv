@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'seguimiento.dart';
 
 class MiPerfil extends StatefulWidget {
   const MiPerfil({super.key});
@@ -37,6 +38,7 @@ class _MiPerfilState extends State<MiPerfil> {
   List<String> _alergiasSeleccionadas = [];
   List<String> _preferenciasSeleccionadas = [];
   List<String> _perfilesGuardados = [];
+  String _ultimoUsuario = '';
 
   @override
   void initState() {
@@ -54,7 +56,11 @@ class _MiPerfilState extends State<MiPerfil> {
   Future<void> _cargarPerfilesGuardados() async {
     final prefs = await SharedPreferences.getInstance();
     final perfilesJson = prefs.getStringList('perfiles_guardados') ?? [];
-    setState(() => _perfilesGuardados = perfilesJson);
+    final ultimo = prefs.getString('ultimo_usuario') ?? '';
+    setState(() {
+      _perfilesGuardados = perfilesJson;
+      _ultimoUsuario = ultimo;
+    });
   }
 
   Future<void> _cargarPerfil() async {
@@ -160,6 +166,34 @@ class _MiPerfilState extends State<MiPerfil> {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('perfil_completo', jsonEncode(perfilActualizado));
+
+      // Guardar como último usuario y registrar entrada de seguimiento
+      final nombreUsuario = perfilActualizado['nombre'] as String;
+      await prefs.setString('ultimo_usuario', nombreUsuario);
+      final seguimientoKey = 'seguimiento_$nombreUsuario';
+      final List<String> historial = prefs.getStringList(seguimientoKey) ?? [];
+      final seguimientoEntry = jsonEncode({
+        'fecha': DateTime.now().toIso8601String(),
+        'macros': macros,
+      });
+      historial.add(seguimientoEntry);
+      await prefs.setStringList(seguimientoKey, historial);
+
+      // Intentar sincronizar la entrada de seguimiento con backend (no bloqueante)
+      try {
+        final syncUrl = Uri.parse('http://192.168.1.100:8000/guardar-seguimiento/');
+        await http.post(syncUrl, headers: {'Content-Type': 'application/json'}, body: seguimientoEntry).timeout(const Duration(seconds: 8));
+      } catch (_) {
+        // ignorar errores de red aquí; el registro queda en SharedPreferences
+      }
+
+      // Intentar sincronizar la entrada de seguimiento con backend (no bloqueante)
+      try {
+        final syncUrl = Uri.parse('http://192.168.1.100:8000/guardar-seguimiento/');
+        await http.post(syncUrl, headers: {'Content-Type': 'application/json'}, body: seguimientoEntry).timeout(const Duration(seconds: 8));
+      } catch (_) {
+        // ignorar errores de red aquí; el registro queda en SharedPreferences
+      }
 
       final url = Uri.parse("http://192.168.1.100:8000/actualizar-perfil/");
       await http.put(
@@ -275,6 +309,17 @@ class _MiPerfilState extends State<MiPerfil> {
       final prefs = await SharedPreferences.getInstance();
       
       await prefs.setString('perfil_${_nombrePerfilController.text}', jsonEncode(perfilGuardado));
+
+      // Guardar como último usuario (usamos el nombre del perfil guardado) y registrar seguimiento
+      await prefs.setString('ultimo_usuario', _nombrePerfilController.text);
+      final seguimientoKey = 'seguimiento_${_nombrePerfilController.text}';
+      final List<String> historial = prefs.getStringList(seguimientoKey) ?? [];
+      final seguimientoEntry = jsonEncode({
+        'fecha': DateTime.now().toIso8601String(),
+        'macros': macros,
+      });
+      historial.add(seguimientoEntry);
+      await prefs.setStringList(seguimientoKey, historial);
 
       _perfilesGuardados.add(_nombrePerfilController.text);
       await prefs.setStringList('perfiles_guardados', _perfilesGuardados);
@@ -440,7 +485,36 @@ class _MiPerfilState extends State<MiPerfil> {
                   child: Icon(Icons.person, size: 50, color: Colors.black),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              if (_ultimoUsuario.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.tealAccent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.show_chart),
+                    label: Text('Ver Seguimiento: $_ultimoUsuario', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      final ultimo = prefs.getString('ultimo_usuario') ?? '';
+                      if (ultimo.isNotEmpty && mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SeguimientoScreen(username: ultimo)),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('No hay usuario para seguimiento'), backgroundColor: Colors.orange),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              const SizedBox(height: 8),
 
               _buildTextField("Nombre", _nombreController, icon: Icons.person),
               _buildTextField("Email", _emailController, keyboardType: TextInputType.emailAddress, icon: Icons.email),

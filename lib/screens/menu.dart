@@ -1,13 +1,8 @@
-  // 🌟 MENÚ PREMIUM OPTIMIZADO Y MÁS ESTÉTICO
-  // Diseño minimalista, moderno, con neon glow y tarjetas 3D.
-  // Puedes pegarlo directamente en tu proyecto y funciona.
-
-  import 'dart:ui';
-  import 'package:flutter/material.dart';
-  import 'package:flutter_svg/flutter_svg.dart';
-  import 'package:nutrivision_ai/screens/macros.dart';
-  import 'package:nutrivision_ai/screens/recetas.dart';
-  import 'package:nutrivision_ai/screens/perfil.dart';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:nutrivision_ai/screens/macros.dart';
+import 'package:nutrivision_ai/screens/recetas.dart' hide Text;
+import 'package:nutrivision_ai/screens/perfil.dart';
 
   class MenuScreen extends StatefulWidget {
     const MenuScreen({super.key});
@@ -72,29 +67,17 @@
             ),
           ),
           centerTitle: false,
-          title: Row(
-            children: [
-              Hero(
-                tag: "logo",
-                child: SvgPicture.asset(
-                  "assets/images/Logo.svg",
-                  height: 48,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                "NutriVision AI",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.tealAccent,
-                  shadows: [
-                    Shadow(color: Colors.tealAccent, blurRadius: 12),
-                  ],
-                ),
-              )
-            ],
-          ),
+          title: const Text(
+            "NutriVision AI",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.tealAccent,
+              shadows: [
+                Shadow(color: Colors.tealAccent, blurRadius: 12),
+              ],
+            ),
+          )
         ),
 
         body: Stack(
