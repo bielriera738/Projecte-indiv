@@ -618,6 +618,93 @@ final List<Receta> recetasDatabase = [
               centerTitle: true,
               backgroundColor: colorFondo,
               elevation: 2,
+              toolbarHeight: 120,
+              flexibleSpace: Padding(
+                padding: const EdgeInsets.only(top: 60, left: 12, right: 12, bottom: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorCardFondo,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colorBorde),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: categories.map((categoria) {
+                                final isSelected = categoria == 'Todos'
+                                    ? selectedCategories.isEmpty
+                                    : selectedCategories.contains(categoria);
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: FilterChip(
+                                    label: Text(
+                                      categoria,
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : colorTexto,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: colorTexto,
+                                    backgroundColor: Colors.transparent,
+                                    side: BorderSide(
+                                      color: colorBorde,
+                                      width: isSelected ? 0 : 1.5,
+                                    ),
+                                    onSelected: (_) => _toggleCategory(categoria),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: tags.map((tag) {
+                                final sel = selectedTags.contains(tag);
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: FilterChip(
+                                    label: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        color: sel ? Colors.white : colorTexto,
+                                      ),
+                                    ),
+                                    selected: sel,
+                                    selectedColor: colorTexto,
+                                    backgroundColor: colorFondo,
+                                    side: BorderSide(
+                                      color: colorBorde,
+                                      width: 1.2,
+                                    ),
+                                    onSelected: (_) => _toggleTag(tag),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             body: Center(
               child: ConstrainedBox(
@@ -626,57 +713,6 @@ final List<Receta> recetasDatabase = [
                   padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
-                      // filtros
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: colorFondo,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colorBorde),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: categories.map((categoria) {
-                                  final isSelected = categoria == 'Todos' ? selectedCategories.isEmpty : selectedCategories.contains(categoria);
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                                    child: FilterChip(
-                                      label: Text(categoria, style: TextStyle(color: isSelected ? Colors.white : colorTexto, fontWeight: FontWeight.w600)),
-                                      selected: isSelected,
-                                      selectedColor: colorTexto,
-                                      backgroundColor: Colors.transparent,
-                                      side: BorderSide(color: colorBorde, width: isSelected ? 0 : 1.5),
-                                      onSelected: (_) => _toggleCategory(categoria),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              children: tags.map((tag) {
-                                final sel = selectedTags.contains(tag);
-                                return FilterChip(
-                                  label: Text(tag, style: TextStyle(color: sel ? Colors.white : colorTexto)),
-                                  selected: sel,
-                                  selectedColor: colorTexto,
-                                  backgroundColor: colorFondo,
-                                  side: BorderSide(color: colorBorde, width: 1.2),
-                                  onSelected: (_) => _toggleTag(tag),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
                       // listado (paginado)
                       Expanded(
                         child: pageItems.isEmpty
