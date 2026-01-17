@@ -27,13 +27,27 @@ class _MiPerfilState extends State<MiPerfil> {
 
   bool _enviando = false;
   bool _mostrarGuardarPerfil = false;
-  bool _modoEdicion = false;
+  bool _modoEdicion = true;
 
   final List<String> generos = ['Masculino', 'Femenino'];
   final List<String> objetivos = ['Definición', 'Volumen', 'Mantenimiento'];
-  final List<String> nivelesActividad = ['Sedentario', 'Ligero', 'Moderado', 'Alto'];
-  final List<String> alergiasDisponibles = ['Gluten', 'Lácteos', 'Mariscos', 'Ninguno'];
-  final List<String> preferenciasDisponibles = ['Vegano', 'Vegetariano', 'Sin restricciones'];
+  final List<String> nivelesActividad = [
+    'Sedentario',
+    'Ligero',
+    'Moderado',
+    'Alto',
+  ];
+  final List<String> alergiasDisponibles = [
+    'Gluten',
+    'Lácteos',
+    'Mariscos',
+    'Ninguno',
+  ];
+  final List<String> preferenciasDisponibles = [
+    'Vegano',
+    'Vegetariano',
+    'Sin restricciones',
+  ];
 
   List<String> _alergiasSeleccionadas = [];
   List<String> _preferenciasSeleccionadas = [];
@@ -66,7 +80,7 @@ class _MiPerfilState extends State<MiPerfil> {
   Future<void> _cargarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
     final perfilJson = prefs.getString('perfil_completo');
-    
+
     if (perfilJson != null) {
       final perfil = jsonDecode(perfilJson);
       setState(() {
@@ -79,16 +93,21 @@ class _MiPerfilState extends State<MiPerfil> {
         _objetivo = perfil['objetivo']?.toString() ?? '';
         _nivelActividad = perfil['nivelActividad']?.toString() ?? '';
         _alergiasSeleccionadas = List<String>.from(perfil['alergias'] ?? []);
-        _preferenciasSeleccionadas = List<String>.from(perfil['preferencias'] ?? []);
+        _preferenciasSeleccionadas = List<String>.from(
+          perfil['preferencias'] ?? [],
+        );
       });
     }
   }
 
   Map<String, dynamic> _calcularMacros() {
     try {
-      if (_pesoController.text.isEmpty || _alturaController.text.isEmpty || 
-          _edadController.text.isEmpty || _genero.isEmpty || 
-          _objetivo.isEmpty || _nivelActividad.isEmpty) {
+      if (_pesoController.text.isEmpty ||
+          _alturaController.text.isEmpty ||
+          _edadController.text.isEmpty ||
+          _genero.isEmpty ||
+          _objetivo.isEmpty ||
+          _nivelActividad.isEmpty) {
         return {'error': 'Por favor completa todos los campos requeridos'};
       }
 
@@ -120,7 +139,8 @@ class _MiPerfilState extends State<MiPerfil> {
 
       int proteinas = (peso * 2.2).toInt();
       int grasas = (calorias * 0.25 / 9).toInt();
-      int carbohidratos = ((calorias - (proteinas * 4 + grasas * 9)) / 4).toInt();
+      int carbohidratos = ((calorias - (proteinas * 4 + grasas * 9)) / 4)
+          .toInt();
 
       return {
         'calorias': calorias,
@@ -181,26 +201,44 @@ class _MiPerfilState extends State<MiPerfil> {
 
       // Intentar sincronizar la entrada de seguimiento con backend (no bloqueante)
       try {
-        final syncUrl = Uri.parse('http://192.168.1.100:8000/guardar-seguimiento/');
-        await http.post(syncUrl, headers: {'Content-Type': 'application/json'}, body: seguimientoEntry).timeout(const Duration(seconds: 8));
+        final syncUrl = Uri.parse(
+          'http://192.168.1.100:8000/guardar-seguimiento/',
+        );
+        await http
+            .post(
+              syncUrl,
+              headers: {'Content-Type': 'application/json'},
+              body: seguimientoEntry,
+            )
+            .timeout(const Duration(seconds: 8));
       } catch (_) {
         // ignorar errores de red aquí; el registro queda en SharedPreferences
       }
 
       // Intentar sincronizar la entrada de seguimiento con backend (no bloqueante)
       try {
-        final syncUrl = Uri.parse('http://192.168.1.100:8000/guardar-seguimiento/');
-        await http.post(syncUrl, headers: {'Content-Type': 'application/json'}, body: seguimientoEntry).timeout(const Duration(seconds: 8));
+        final syncUrl = Uri.parse(
+          'http://192.168.1.100:8000/guardar-seguimiento/',
+        );
+        await http
+            .post(
+              syncUrl,
+              headers: {'Content-Type': 'application/json'},
+              body: seguimientoEntry,
+            )
+            .timeout(const Duration(seconds: 8));
       } catch (_) {
         // ignorar errores de red aquí; el registro queda en SharedPreferences
       }
 
       final url = Uri.parse("http://192.168.1.100:8000/actualizar-perfil/");
-      await http.put(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(perfilActualizado),
-      ).timeout(const Duration(seconds: 10));
+      await http
+          .put(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(perfilActualizado),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -229,10 +267,13 @@ class _MiPerfilState extends State<MiPerfil> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF051D16),
+          backgroundColor: Colors.grey.shade800,
           title: const Text(
             "Cerrar Sesión",
-            style: TextStyle(color: Colors.tealAccent, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.tealAccent,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: const Text(
             "¿Estás seguro de que deseas cerrar sesión?",
@@ -241,13 +282,16 @@ class _MiPerfilState extends State<MiPerfil> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancelar", style: TextStyle(color: Colors.white70)),
+              child: const Text(
+                "Cancelar",
+                style: TextStyle(color: Colors.black54),
+              ),
             ),
             TextButton(
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.clear();
-                
+
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -257,15 +301,20 @@ class _MiPerfilState extends State<MiPerfil> {
                       duration: Duration(seconds: 2),
                     ),
                   );
-                  
+
                   Future.delayed(const Duration(seconds: 1), () {
                     if (mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                      Navigator.of(
+                        context,
+                      ).pushNamedAndRemoveUntil('/', (route) => false);
                     }
                   });
                 }
               },
-              child: const Text("Cerrar Sesión", style: TextStyle(color: Colors.red)),
+              child: const Text(
+                "Cerrar Sesión",
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
         );
@@ -276,7 +325,10 @@ class _MiPerfilState extends State<MiPerfil> {
   Future<void> _guardarPerfilConNombre() async {
     if (_nombrePerfilController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('❌ Por favor ingresa un nombre para el perfil'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('❌ Por favor ingresa un nombre para el perfil'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -307,8 +359,11 @@ class _MiPerfilState extends State<MiPerfil> {
       };
 
       final prefs = await SharedPreferences.getInstance();
-      
-      await prefs.setString('perfil_${_nombrePerfilController.text}', jsonEncode(perfilGuardado));
+
+      await prefs.setString(
+        'perfil_${_nombrePerfilController.text}',
+        jsonEncode(perfilGuardado),
+      );
 
       // Guardar como último usuario (usamos el nombre del perfil guardado) y registrar seguimiento
       await prefs.setString('ultimo_usuario', _nombrePerfilController.text);
@@ -324,16 +379,25 @@ class _MiPerfilState extends State<MiPerfil> {
       _perfilesGuardados.add(_nombrePerfilController.text);
       await prefs.setStringList('perfiles_guardados', _perfilesGuardados);
 
-      final url = Uri.parse("http://192.168.1.100:8000/guardar-perfil-completo/");
-      await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(perfilGuardado),
-      ).timeout(const Duration(seconds: 10));
+      final url = Uri.parse(
+        "http://192.168.1.100:8000/guardar-perfil-completo/",
+      );
+      await http
+          .post(
+            url,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(perfilGuardado),
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('✅ Perfil "${_nombrePerfilController.text}" guardado correctamente'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(
+              '✅ Perfil "${_nombrePerfilController.text}" guardado correctamente',
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
         setState(() {
           _mostrarGuardarPerfil = false;
@@ -356,26 +420,42 @@ class _MiPerfilState extends State<MiPerfil> {
       children: items.map((item) {
         final isSelected = seleccionadas.contains(item);
         return FilterChip(
-          label: Text(item, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+          label: Text(
+            item,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           selected: isSelected,
-          selectedColor: Colors.tealAccent.withOpacity(0.8),
-          backgroundColor: Colors.white12,
-          side: BorderSide(color: isSelected ? Colors.tealAccent : Colors.white24, width: 1.5),
-          onSelected: _modoEdicion ? (_) {
-            setState(() {
-              if (isSelected) {
-                seleccionadas.remove(item);
-              } else {
-                seleccionadas.add(item);
-              }
-            });
-          } : null,
+          selectedColor: Colors.black87,
+          backgroundColor: Colors.grey.shade200,
+          side: BorderSide(
+            color: isSelected ? Colors.black87 : Colors.grey.shade400,
+            width: 1.5,
+          ),
+          onSelected: _modoEdicion
+              ? (_) {
+                  setState(() {
+                    if (isSelected) {
+                      seleccionadas.remove(item);
+                    } else {
+                      seleccionadas.add(item);
+                    }
+                  });
+                }
+              : null,
         );
       }).toList(),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {TextInputType keyboardType = TextInputType.text, IconData? icon}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+    IconData? icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
@@ -386,19 +466,19 @@ class _MiPerfilState extends State<MiPerfil> {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.tealAccent) : null,
+          prefixIcon: icon != null ? Icon(icon, color: Colors.teal) : null,
           filled: true,
-          fillColor: _modoEdicion ? const Color(0xFF04221E) : const Color(0xFF051D16),
+          fillColor: Colors.black87,
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.tealAccent, width: 1.5),
+            borderSide: const BorderSide(color: Colors.teal, width: 1.5),
             borderRadius: BorderRadius.circular(10),
           ),
           disabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white24, width: 1),
+            borderSide: const BorderSide(color: Colors.grey, width: 1),
             borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white, width: 2),
+            borderSide: const BorderSide(color: Colors.teal, width: 2),
             borderRadius: BorderRadius.circular(10),
           ),
         ),
@@ -407,34 +487,45 @@ class _MiPerfilState extends State<MiPerfil> {
     );
   }
 
-  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged, {IconData? icon}) {
+  Widget _buildDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged, {
+    IconData? icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: DropdownButtonFormField<String>(
         initialValue: value.isEmpty ? null : value,
-        dropdownColor: const Color(0xFF072119),
+        dropdownColor: Colors.black87,
         style: const TextStyle(color: Colors.white, fontSize: 16),
-        disabledHint: Text(value.isEmpty ? label : value, style: const TextStyle(color: Colors.white70)),
+        disabledHint: Text(
+          value.isEmpty ? label : value,
+          style: const TextStyle(color: Colors.white70),
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.tealAccent) : null,
+          prefixIcon: icon != null ? Icon(icon, color: Colors.teal) : null,
           filled: true,
-          fillColor: _modoEdicion ? const Color(0xFF04221E) : const Color(0xFF051D16),
+          fillColor: Colors.black87,
           enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.tealAccent, width: 1.5),
+            borderSide: const BorderSide(color: Colors.teal, width: 1.5),
             borderRadius: BorderRadius.circular(10),
           ),
           disabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white24, width: 1),
+            borderSide: const BorderSide(color: Colors.grey, width: 1),
             borderRadius: BorderRadius.circular(10),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white, width: 2),
+            borderSide: const BorderSide(color: Colors.teal, width: 2),
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        items: items
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
         onChanged: _modoEdicion ? onChanged : null,
         validator: (value) => value == null ? "Requerido" : null,
       ),
@@ -457,10 +548,17 @@ class _MiPerfilState extends State<MiPerfil> {
     final macros = _calcularMacros();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF051D16),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Mi Perfil", style: TextStyle(color: Colors.tealAccent, fontWeight: FontWeight.bold, fontSize: 22)),
-        backgroundColor: Colors.transparent,
+        title: const Text(
+          "Mi Perfil",
+          style: TextStyle(
+            color: Colors.teal,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           Tooltip(
@@ -474,282 +572,467 @@ class _MiPerfilState extends State<MiPerfil> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.tealAccent,
-                  child: Icon(Icons.person, size: 50, color: Colors.black),
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300, width: 1.4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              if (_ultimoUsuario.isNotEmpty)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.tealAccent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.show_chart),
-                    label: Text('Ver Seguimiento: $_ultimoUsuario', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      final ultimo = prefs.getString('ultimo_usuario') ?? '';
-                      if (ultimo.isNotEmpty && mounted) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SeguimientoScreen(username: ultimo)),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No hay usuario para seguimiento'), backgroundColor: Colors.orange),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              const SizedBox(height: 8),
-
-              _buildTextField("Nombre", _nombreController, icon: Icons.person),
-              _buildTextField("Email", _emailController, keyboardType: TextInputType.emailAddress, icon: Icons.email),
-              _buildDropdown("Género", _genero, generos, (value) => setState(() => _genero = value ?? ''), icon: Icons.wc),
-
-              const SizedBox(height: 20),
-              const Divider(color: Colors.tealAccent, thickness: 1),
-              const SizedBox(height: 20),
-
-              _buildTextField("Edad (años)", _edadController, keyboardType: TextInputType.number, icon: Icons.cake_outlined),
-              _buildTextField("Altura (cm)", _alturaController, keyboardType: TextInputType.number, icon: Icons.height),
-              _buildTextField("Peso (kg)", _pesoController, keyboardType: TextInputType.number, icon: Icons.monitor_weight),
-
-              const SizedBox(height: 20),
-              const Divider(color: Colors.tealAccent, thickness: 1),
-              const SizedBox(height: 20),
-
-              _buildDropdown("Objetivo", _objetivo, objetivos, (value) => setState(() => _objetivo = value ?? ''), icon: Icons.track_changes),
-              _buildDropdown("Nivel de Actividad", _nivelActividad, nivelesActividad, (value) => setState(() => _nivelActividad = value ?? ''), icon: Icons.directions_run),
-
-              const SizedBox(height: 20),
-
-              Align(alignment: Alignment.centerLeft, child: const Text("Alergias", style: TextStyle(color: Colors.tealAccent, fontSize: 16, fontWeight: FontWeight.bold))),
-              const SizedBox(height: 10),
-              _buildChipList(alergiasDisponibles, _alergiasSeleccionadas),
-
-              const SizedBox(height: 18),
-
-              Align(alignment: Alignment.centerLeft, child: const Text("Preferencias", style: TextStyle(color: Colors.tealAccent, fontSize: 16, fontWeight: FontWeight.bold))),
-              const SizedBox(height: 10),
-              _buildChipList(preferenciasDisponibles, _preferenciasSeleccionadas),
-
-              const SizedBox(height: 28),
-
-              if (!macros.containsKey('error'))
-                Card(
-                  color: const Color(0xFF071B18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: const BorderSide(color: Colors.orangeAccent, width: 2),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.calculate, color: Colors.orangeAccent),
-                            SizedBox(width: 10),
-                            Text("Macros Calculados", style: TextStyle(color: Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        _filasMacro("🔥 Calorías", "${macros['calorias']} kcal", Colors.redAccent),
-                        const SizedBox(height: 10),
-                        _filasMacro("🥚 Proteínas", "${macros['proteinas']} g", Colors.blueAccent),
-                        const SizedBox(height: 10),
-                        _filasMacro("🍞 Carbohidratos", "${macros['carbohidratos']} g", Colors.amberAccent),
-                        const SizedBox(height: 10),
-                        _filasMacro("🥑 Grasas", "${macros['grasas']} g", Colors.greenAccent),
-                      ],
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              if (_modoEdicion)
-                Row(
+              child: Form(
+                key: _formKey,
+                child: Column(
                   children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    Center(
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.teal,
+                        child: Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.white,
                         ),
-                        icon: _enviando ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        ) : const Icon(Icons.save),
-                        label: const Text("Guardar Cambios", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        onPressed: _enviando ? null : _guardarCambios,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.close),
-                        label: const Text("Cancelar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        onPressed: () {
-                          _cargarPerfil();
-                          setState(() => _modoEdicion = false);
-                        },
-                      ),
-                    ),
-                  ],
-                )
-              else
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.tealAccent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.edit),
-                    label: const Text("Editar Perfil", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    onPressed: () => setState(() => _modoEdicion = true),
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.tealAccent,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: const Icon(Icons.save),
-                  label: const Text("Guardar Perfil con Nombre", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  onPressed: () => setState(() => _mostrarGuardarPerfil = !_mostrarGuardarPerfil),
-                ),
-              ),
-
-              if (_mostrarGuardarPerfil) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: const Color(0xFF072119),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildTextField("Nombre del Perfil", _nombrePerfilController, icon: Icons.bookmark),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                icon: const Icon(Icons.check),
-                                label: const Text("Guardar"),
-                                onPressed: _guardarPerfilConNombre,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                icon: const Icon(Icons.close),
-                                label: const Text("Cancelar"),
-                                onPressed: () => setState(() => _mostrarGuardarPerfil = false),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-
-              if (_perfilesGuardados.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Card(
-                  color: const Color(0xFF072119),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.folder_open, color: Colors.tealAccent),
-                            SizedBox(width: 10),
-                            Text("Perfiles Guardados", style: TextStyle(color: Colors.tealAccent, fontSize: 16, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        ..._perfilesGuardados.map((perfil) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.tealAccent.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.tealAccent, width: 1),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(perfil, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-                                IconButton(
-                                  icon: const Icon(Icons.copy, color: Colors.tealAccent, size: 20),
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Copia "$perfil" en el chat para recetas personalizadas')),
-                                    );
-                                  },
-                                ),
-                              ],
+                    const SizedBox(height: 12),
+                    if (_ultimoUsuario.isNotEmpty)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        )),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                          icon: const Icon(Icons.show_chart),
+                          label: Text(
+                            'Ver Seguimiento: $_ultimoUsuario',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            final ultimo =
+                                prefs.getString('ultimo_usuario') ?? '';
+                            if (ultimo.isNotEmpty && mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      SeguimientoScreen(username: ultimo),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'No hay usuario para seguimiento',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    const SizedBox(height: 8),
 
-              const SizedBox(height: 20),
-            ],
+                    _buildTextField(
+                      "Nombre",
+                      _nombreController,
+                      icon: Icons.person,
+                    ),
+                    _buildTextField(
+                      "Email",
+                      _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      icon: Icons.email,
+                    ),
+                    _buildDropdown(
+                      "Género",
+                      _genero,
+                      generos,
+                      (value) => setState(() => _genero = value ?? ''),
+                      icon: Icons.wc,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(color: Colors.tealAccent, thickness: 1),
+                    const SizedBox(height: 20),
+
+                    _buildTextField(
+                      "Edad (años)",
+                      _edadController,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.cake_outlined,
+                    ),
+                    _buildTextField(
+                      "Altura (cm)",
+                      _alturaController,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.height,
+                    ),
+                    _buildTextField(
+                      "Peso (kg)",
+                      _pesoController,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.monitor_weight,
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Divider(color: Colors.tealAccent, thickness: 1),
+                    const SizedBox(height: 20),
+
+                    _buildDropdown(
+                      "Objetivo",
+                      _objetivo,
+                      objetivos,
+                      (value) => setState(() => _objetivo = value ?? ''),
+                      icon: Icons.track_changes,
+                    ),
+                    _buildDropdown(
+                      "Nivel de Actividad",
+                      _nivelActividad,
+                      nivelesActividad,
+                      (value) => setState(() => _nivelActividad = value ?? ''),
+                      icon: Icons.directions_run,
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    if (!macros.containsKey('error'))
+                      Card(
+                        color: const Color(0xFF071B18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: const BorderSide(
+                            color: Colors.orangeAccent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.calculate,
+                                    color: Colors.orangeAccent,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Macros Calculados",
+                                    style: TextStyle(
+                                      color: Colors.orangeAccent,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              _filasMacro(
+                                "🔥 Calorías",
+                                "${macros['calorias']} kcal",
+                                Colors.redAccent,
+                              ),
+                              const SizedBox(height: 10),
+                              _filasMacro(
+                                "🥚 Proteínas",
+                                "${macros['proteinas']} g",
+                                Colors.blueAccent,
+                              ),
+                              const SizedBox(height: 10),
+                              _filasMacro(
+                                "🍞 Carbohidratos",
+                                "${macros['carbohidratos']} g",
+                                Colors.amberAccent,
+                              ),
+                              const SizedBox(height: 10),
+                              _filasMacro(
+                                "🥑 Grasas",
+                                "${macros['grasas']} g",
+                                Colors.greenAccent,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 20),
+
+                    if (_modoEdicion)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: _enviando
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.save),
+                              label: const Text(
+                                "Guardar Cambios",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              onPressed: _enviando ? null : _guardarCambios,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              icon: const Icon(Icons.close),
+                              label: const Text(
+                                "Cancelar",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              onPressed: () {
+                                _cargarPerfil();
+                                setState(() => _modoEdicion = false);
+                              },
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black87,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.edit),
+                          label: const Text(
+                            "Editar Perfil",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          onPressed: () => setState(() => _modoEdicion = true),
+                        ),
+                      ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.save),
+                        label: const Text(
+                          "Guardar Perfil con Nombre",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onPressed: () => setState(
+                          () => _mostrarGuardarPerfil = !_mostrarGuardarPerfil,
+                        ),
+                      ),
+                    ),
+
+                    if (_mostrarGuardarPerfil) ...[
+                      const SizedBox(height: 20),
+                      Card(
+                        color: Colors.grey.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                "Nombre del Perfil",
+                                _nombrePerfilController,
+                                icon: Icons.bookmark,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.check),
+                                      label: const Text("Guardar"),
+                                      onPressed: _guardarPerfilConNombre,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.close),
+                                      label: const Text("Cancelar"),
+                                      onPressed: () => setState(
+                                        () => _mostrarGuardarPerfil = false,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    if (_perfilesGuardados.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Card(
+                        color: Colors.grey.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.folder_open,
+                                    color: Colors.tealAccent,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Perfiles Guardados",
+                                    style: TextStyle(
+                                      color: Colors.tealAccent,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ..._perfilesGuardados.map(
+                                (perfil) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.tealAccent.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.tealAccent,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          perfil,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.copy,
+                                            color: Colors.tealAccent,
+                                            size: 20,
+                                          ),
+                                          onPressed: () {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Copia "$perfil" en el chat para recetas personalizadas',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -760,7 +1043,10 @@ class _MiPerfilState extends State<MiPerfil> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
@@ -768,7 +1054,14 @@ class _MiPerfilState extends State<MiPerfil> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: color, width: 1.5),
           ),
-          child: Text(valor, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text(
+            valor,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ],
     );

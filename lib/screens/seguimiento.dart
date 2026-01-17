@@ -22,16 +22,76 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   int _selectedTabIndex = 0;
 
   final Map<String, Map<String, dynamic>> baseAlimentos = {
-    "pollo": {"nombre": "Pechuga de Pollo", "calorias": 165, "proteinas": 31, "carbs": 0, "grasas": 3.6},
-    "pavo": {"nombre": "Pechuga de Pavo", "calorias": 135, "proteinas": 29, "carbs": 0, "grasas": 0.5},
-    "pescado": {"nombre": "Salmón", "calorias": 208, "proteinas": 20, "carbs": 0, "grasas": 13},
-    "atun": {"nombre": "Atún", "calorias": 132, "proteinas": 29, "carbs": 0, "grasas": 0.9},
-    "huevo": {"nombre": "Huevo", "calorias": 155, "proteinas": 13, "carbs": 1.1, "grasas": 11},
-    "arroz": {"nombre": "Arroz", "calorias": 130, "proteinas": 2.7, "carbs": 28, "grasas": 0.3},
-    "avena": {"nombre": "Avena", "calorias": 389, "proteinas": 16.6, "carbs": 66.2, "grasas": 6.9},
-    "pasta": {"nombre": "Pasta", "calorias": 174, "proteinas": 7.5, "carbs": 34.4, "grasas": 1.1},
-    "papa": {"nombre": "Papa", "calorias": 77, "proteinas": 1.7, "carbs": 17, "grasas": 0.1},
-    "aguacate": {"nombre": "Aguacate", "calorias": 160, "proteinas": 2, "carbs": 9, "grasas": 14.7},
+    "pollo": {
+      "nombre": "Pechuga de Pollo",
+      "calorias": 165,
+      "proteinas": 31,
+      "carbs": 0,
+      "grasas": 3.6,
+    },
+    "pavo": {
+      "nombre": "Pechuga de Pavo",
+      "calorias": 135,
+      "proteinas": 29,
+      "carbs": 0,
+      "grasas": 0.5,
+    },
+    "pescado": {
+      "nombre": "Salmón",
+      "calorias": 208,
+      "proteinas": 20,
+      "carbs": 0,
+      "grasas": 13,
+    },
+    "atun": {
+      "nombre": "Atún",
+      "calorias": 132,
+      "proteinas": 29,
+      "carbs": 0,
+      "grasas": 0.9,
+    },
+    "huevo": {
+      "nombre": "Huevo",
+      "calorias": 155,
+      "proteinas": 13,
+      "carbs": 1.1,
+      "grasas": 11,
+    },
+    "arroz": {
+      "nombre": "Arroz",
+      "calorias": 130,
+      "proteinas": 2.7,
+      "carbs": 28,
+      "grasas": 0.3,
+    },
+    "avena": {
+      "nombre": "Avena",
+      "calorias": 389,
+      "proteinas": 16.6,
+      "carbs": 66.2,
+      "grasas": 6.9,
+    },
+    "pasta": {
+      "nombre": "Pasta",
+      "calorias": 174,
+      "proteinas": 7.5,
+      "carbs": 34.4,
+      "grasas": 1.1,
+    },
+    "papa": {
+      "nombre": "Papa",
+      "calorias": 77,
+      "proteinas": 1.7,
+      "carbs": 17,
+      "grasas": 0.1,
+    },
+    "aguacate": {
+      "nombre": "Aguacate",
+      "calorias": 160,
+      "proteinas": 2,
+      "carbs": 9,
+      "grasas": 14.7,
+    },
   };
 
   @override
@@ -64,14 +124,17 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final perfilJson = prefs.getString('perfil_completo');
-      
+
       if (perfilJson != null) {
         final perfil = jsonDecode(perfilJson) as Map<String, dynamic>;
         final macros = perfil['macros'] as Map<String, dynamic>? ?? {};
-        
+
         setState(() {
           // Usa username pasado si existe, sino usa el guardado en SharedPreferences
-          _nombreUsuario = (widget.username != null && widget.username!.isNotEmpty) ? widget.username! : (perfil['nombre'] as String? ?? 'Usuario');
+          _nombreUsuario =
+              (widget.username != null && widget.username!.isNotEmpty)
+              ? widget.username!
+              : (perfil['nombre'] as String? ?? 'Usuario');
           _macrosObjetivo = {
             'calorias': (macros['calorias'] as num?)?.toDouble() ?? 2000.0,
             'proteinas': (macros['proteinas'] as num?)?.toDouble() ?? 150.0,
@@ -93,17 +156,18 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final hoy = DateTime.now();
-      final fechaFormato = "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
+      final fechaFormato =
+          "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
       final comidasJson = prefs.getString('comidas_$fechaFormato');
-      
+
       double calorias = 0.0;
       double proteinas = 0.0;
       double carbs = 0.0;
       double grasas = 0.0;
-      
+
       if (comidasJson != null) {
         final comidas = jsonDecode(comidasJson) as List<dynamic>? ?? [];
-        
+
         for (final comida in comidas) {
           if (comida is Map<String, dynamic>) {
             calorias += (comida['calorias'] as num?)?.toDouble() ?? 0.0;
@@ -113,7 +177,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           }
         }
       }
-      
+
       if (mounted) {
         setState(() {
           _macrosConsumidos = {
@@ -133,26 +197,32 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final chatHistoryJson = prefs.getString('chat_nutricion');
-      
+
       if (chatHistoryJson != null) {
         final chatHistory = jsonDecode(chatHistoryJson) as List<dynamic>? ?? [];
         final recetas = <Map<String, dynamic>>[];
-        
+
         for (final mensaje in chatHistory) {
           if (mensaje is Map<String, dynamic>) {
             final contenido = mensaje['contenido'] as String? ?? '';
-            if (contenido.contains('Receta:') || contenido.contains('Ingredientes:')) {
+            if (contenido.contains('Receta:') ||
+                contenido.contains('Ingredientes:')) {
               recetas.add({
                 'titulo': _extraerTitulo(contenido),
                 'contenido': contenido,
-                'fecha': mensaje['timestamp'] ?? DateTime.now().toIso8601String(),
+                'fecha':
+                    mensaje['timestamp'] ?? DateTime.now().toIso8601String(),
               });
             }
           }
         }
-        
+
         if (mounted) {
-          setState(() => _recetasPersonalizadas = recetas.length > 10 ? recetas.sublist(0, 10) : recetas);
+          setState(
+            () => _recetasPersonalizadas = recetas.length > 10
+                ? recetas.sublist(0, 10)
+                : recetas,
+          );
         }
       }
     } catch (e) {
@@ -164,14 +234,15 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final historicoList = <Map<String, dynamic>>[];
-      
+
       for (int i = 0; i < 7; i++) {
         final fecha = DateTime.now().subtract(Duration(days: i));
-        final fechaFormato = "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
+        final fechaFormato =
+            "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
         final comidasJson = prefs.getString('comidas_$fechaFormato');
-        
+
         double calorias = 0.0, proteinas = 0.0, carbs = 0.0, grasas = 0.0;
-        
+
         if (comidasJson != null) {
           final comidas = jsonDecode(comidasJson) as List<dynamic>? ?? [];
           for (final comida in comidas) {
@@ -183,7 +254,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
             }
           }
         }
-        
+
         final nombreDia = _obtenerNombreDia(fecha.weekday);
         historicoList.add({
           'fecha': fechaFormato,
@@ -194,7 +265,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           'grasas': grasas,
         });
       }
-      
+
       if (mounted) {
         setState(() => _historicoMacros = historicoList.reversed.toList());
       }
@@ -236,7 +307,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         _mostrarMensaje("❌ Alimento no encontrado", Colors.red);
         return;
       }
-      
+
       final factor = gramos / 100;
       final comidaNueva = {
         'nombre': alimento['nombre'] as String,
@@ -250,20 +321,21 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
 
       final prefs = await SharedPreferences.getInstance();
       final hoy = DateTime.now();
-      final hoyFormato = "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
-      
+      final hoyFormato =
+          "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
+
       List<dynamic> comidas = [];
       final comidasJson = prefs.getString('comidas_$hoyFormato');
       if (comidasJson != null) {
         comidas = jsonDecode(comidasJson) as List<dynamic>;
       }
-      
+
       comidas.add(comidaNueva);
       await prefs.setString('comidas_$hoyFormato', jsonEncode(comidas));
 
       _gramosController.clear();
       setState(() => _alimentoSeleccionado = '');
-      
+
       await _cargarComidayDelDia();
       _mostrarMensaje("✅ ${alimento['nombre']} agregado", Colors.green);
     } catch (e) {
@@ -278,7 +350,10 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       SnackBar(
         content: Row(
           children: [
-            Icon(color == Colors.green ? Icons.check_circle : Icons.error, color: Colors.white),
+            Icon(
+              color == Colors.green ? Icons.check_circle : Icons.error,
+              color: Colors.white,
+            ),
             const SizedBox(width: 12),
             Expanded(child: Text(mensaje)),
           ],
@@ -307,32 +382,46 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   Widget build(BuildContext context) {
     if (_cargandoDatos) {
       return Scaffold(
-        backgroundColor: const Color(0xFF051D16),
+        backgroundColor: Colors.black87,
         appBar: AppBar(
-          title: const Text("📊 Seguimiento", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-          backgroundColor: const Color(0xFF0F4D3C),
+          title: const Text(
+            "📊 Seguimiento",
+            style: TextStyle(
+              color: Colors.teal,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
+          ),
+          backgroundColor: Colors.black87,
           elevation: 0,
         ),
         body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.tealAccent),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF051D16),
+      backgroundColor: Colors.black87,
       appBar: AppBar(
-        title: const Text("📊 Seguimiento", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-        backgroundColor: const Color(0xFF0F4D3C),
+        title: const Text(
+          "📊 Seguimiento",
+          style: TextStyle(
+            color: Colors.teal,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        backgroundColor: Colors.black87,
         elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Container(
-              color: const Color(0xFF0F4D3C),
+              color: Colors.grey.shade100,
               child: Row(
                 children: [
                   _construirTab(0, "📅 Hoy", Icons.today),
@@ -361,7 +450,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? Colors.tealAccent : Colors.transparent,
+                color: isSelected ? Colors.teal : Colors.transparent,
                 width: 3,
               ),
             ),
@@ -369,12 +458,16 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? Colors.tealAccent : Colors.white70, size: 20),
+              Icon(
+                icon,
+                color: isSelected ? Colors.teal : Colors.black54,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.tealAccent : Colors.white70,
+                  color: isSelected ? Colors.teal : Colors.black54,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),
@@ -404,25 +497,35 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Card(
-          color: const Color(0xFF0F4D3C),
+          color: Colors.grey.shade100,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 const CircleAvatar(
                   radius: 30,
-                  backgroundColor: Colors.tealAccent,
-                  child: Icon(Icons.person, color: Colors.black, size: 30),
+                  backgroundColor: Colors.teal,
+                  child: Icon(Icons.person, color: Colors.black87, size: 30),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("¡Hola, $_nombreUsuario! 👋", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(
+                        "¡Hola, $_nombreUsuario! 👋",
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       Text(
                         _obtenerFechaHoy(),
-                        style: const TextStyle(color: Colors.white70, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -450,26 +553,50 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           ),
           child: Column(
             children: [
-              const Text("CALORÍAS HOY", style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 1)),
+              const Text(
+                "CALORÍAS HOY",
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1,
+                ),
+              ),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Column(
                     children: [
-                      Text("${_macrosConsumidos['calorias'].toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
-                      const Text("Consumido", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(
+                        "${_macrosConsumidos['calorias'].toStringAsFixed(0)}",
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        "Consumido",
+                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                      ),
                     ],
                   ),
-                  Container(
-                    height: 60,
-                    width: 2,
-                    color: Colors.white30,
-                  ),
+                  Container(height: 60, width: 2, color: Colors.white30),
                   Column(
                     children: [
-                      Text("${_macrosObjetivo['calorias'].toInt()}", style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)),
-                      const Text("Objetivo", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      Text(
+                        "${_macrosObjetivo['calorias'].toInt()}",
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        "Objetivo",
+                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                      ),
                     ],
                   ),
                 ],
@@ -478,85 +605,154 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
-                  value: _calcularPorcentaje(_macrosConsumidos['calorias'], _macrosObjetivo['calorias']) / 100,
+                  value:
+                      _calcularPorcentaje(
+                        _macrosConsumidos['calorias'],
+                        _macrosObjetivo['calorias'],
+                      ) /
+                      100,
                   minHeight: 8,
                   backgroundColor: Colors.white30,
-                  valueColor: AlwaysStoppedAnimation<Color>(_obtenerColorProgreso(_macrosConsumidos['calorias'], _macrosObjetivo['calorias'])),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _obtenerColorProgreso(
+                      _macrosConsumidos['calorias'],
+                      _macrosObjetivo['calorias'],
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
-              Text("${_calcularPorcentaje(_macrosConsumidos['calorias'], _macrosObjetivo['calorias']).toStringAsFixed(0)}% completado", style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text(
+                "${_calcularPorcentaje(_macrosConsumidos['calorias'], _macrosObjetivo['calorias']).toStringAsFixed(0)}% completado",
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 24),
 
-        const Text("MACRONUTRIENTES", style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const Text(
+          "MACRONUTRIENTES",
+          style: TextStyle(
+            color: Colors.teal,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 16),
 
-        _construirMacroCard("🥚 Proteínas", "${_macrosConsumidos['proteinas'].toStringAsFixed(1)}g", "${_macrosObjetivo['proteinas'].toInt()}g", Colors.blueAccent, _macrosConsumidos['proteinas'], _macrosObjetivo['proteinas']),
+        _construirMacroCard(
+          "🥚 Proteínas",
+          "${_macrosConsumidos['proteinas'].toStringAsFixed(1)}g",
+          "${_macrosObjetivo['proteinas'].toInt()}g",
+          Colors.blueAccent,
+          _macrosConsumidos['proteinas'],
+          _macrosObjetivo['proteinas'],
+        ),
         const SizedBox(height: 12),
 
-        _construirMacroCard("🍞 Carbohidratos", "${_macrosConsumidos['carbs'].toStringAsFixed(1)}g", "${_macrosObjetivo['carbs'].toInt()}g", Colors.amberAccent, _macrosConsumidos['carbs'], _macrosObjetivo['carbs']),
+        _construirMacroCard(
+          "🍞 Carbohidratos",
+          "${_macrosConsumidos['carbs'].toStringAsFixed(1)}g",
+          "${_macrosObjetivo['carbs'].toInt()}g",
+          Colors.amberAccent,
+          _macrosConsumidos['carbs'],
+          _macrosObjetivo['carbs'],
+        ),
         const SizedBox(height: 12),
 
-        _construirMacroCard("🥑 Grasas", "${_macrosConsumidos['grasas'].toStringAsFixed(1)}g", "${_macrosObjetivo['grasas'].toInt()}g", Colors.greenAccent, _macrosConsumidos['grasas'], _macrosObjetivo['grasas']),
+        _construirMacroCard(
+          "🥑 Grasas",
+          "${_macrosConsumidos['grasas'].toStringAsFixed(1)}g",
+          "${_macrosObjetivo['grasas'].toInt()}g",
+          Colors.greenAccent,
+          _macrosConsumidos['grasas'],
+          _macrosObjetivo['grasas'],
+        ),
 
         const SizedBox(height: 28),
 
-        const Text("REGISTRAR COMIDA", style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const Text(
+          "REGISTRAR COMIDA",
+          style: TextStyle(
+            color: Colors.teal,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 16),
 
         Card(
-          color: const Color(0xFF072119),
+          color: Colors.grey.shade50,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.06),
+                    color: Colors.black87,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.tealAccent.withOpacity(0.3), width: 1.5),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
                   ),
                   child: DropdownButton<String>(
                     isExpanded: true,
-                    value: _alimentoSeleccionado.isEmpty ? null : _alimentoSeleccionado,
+                    value: _alimentoSeleccionado.isEmpty
+                        ? null
+                        : _alimentoSeleccionado,
                     hint: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text("Selecciona alimento", style: TextStyle(color: Colors.white70)),
+                      child: Text(
+                        "Selecciona alimento",
+                        style: TextStyle(color: Colors.black54),
+                      ),
                     ),
-                    dropdownColor: const Color(0xFF072119),
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
-                    icon: const Icon(Icons.arrow_drop_down, color: Colors.tealAccent),
+                    dropdownColor: Colors.black87,
+                    style: const TextStyle(color: Colors.black87, fontSize: 15),
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.teal),
                     underline: const SizedBox(),
                     items: baseAlimentos.entries.map((e) {
                       return DropdownMenuItem(
                         value: e.key,
-                        child: Text(e.value['nombre'] as String, style: const TextStyle(color: Colors.white)),
+                        child: Text(
+                          e.value['nombre'] as String,
+                          style: const TextStyle(color: Colors.black87),
+                        ),
                       );
                     }).toList(),
-                    onChanged: (value) => setState(() => _alimentoSeleccionado = value ?? ''),
+                    onChanged: (value) =>
+                        setState(() => _alimentoSeleccionado = value ?? ''),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _gramosController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black87),
                   decoration: InputDecoration(
                     hintText: "Gramos (ej: 150)",
-                    hintStyle: const TextStyle(color: Colors.white54),
+                    hintStyle: const TextStyle(color: Colors.black38),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.06),
-                    prefixIcon: const Icon(Icons.scale, color: Colors.tealAccent),
+                    fillColor: Colors.black87,
+                    prefixIcon: const Icon(Icons.scale, color: Colors.teal),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.tealAccent.withOpacity(0.3), width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.tealAccent.withOpacity(0.3), width: 1.5),
+                      borderSide: BorderSide(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -565,13 +761,21 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.tealAccent,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.black87,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     icon: const Icon(Icons.add_circle_outline, size: 22),
-                    label: const Text("Agregar Comida", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    label: const Text(
+                      "Agregar Comida",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     onPressed: _agregarComida,
                   ),
                 ),
@@ -589,11 +793,17 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant_menu, color: Colors.tealAccent, size: 64),
+            Icon(Icons.restaurant_menu, color: Colors.teal, size: 64),
             const SizedBox(height: 16),
-            const Text("Sin recetas personalizadas", style: TextStyle(color: Colors.white70, fontSize: 16)),
+            const Text(
+              "Sin recetas personalizadas",
+              style: TextStyle(color: Colors.black54, fontSize: 16),
+            ),
             const SizedBox(height: 8),
-            const Text("Solicita recetas en el chat para verlas aquí", style: TextStyle(color: Colors.white54, fontSize: 13)),
+            const Text(
+              "Solicita recetas en el chat para verlas aquí",
+              style: TextStyle(color: Colors.black38, fontSize: 13),
+            ),
           ],
         ),
       );
@@ -601,11 +811,19 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
 
     return Column(
       children: [
-        const Text("RECETAS DEL CHAT", style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const Text(
+          "RECETAS DEL CHAT",
+          style: TextStyle(
+            color: Colors.teal,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 16),
         ..._recetasPersonalizadas.map((receta) {
           return Card(
-            color: const Color(0xFF0F4D3C),
+            color: Colors.grey.shade100,
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -614,7 +832,11 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                 children: [
                   Text(
                     receta['titulo'] as String,
-                    style: const TextStyle(color: Colors.tealAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.teal,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -623,7 +845,11 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                     (receta['contenido'] as String).length > 200
                         ? "${(receta['contenido'] as String).substring(0, 200)}..."
                         : receta['contenido'] as String,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -639,12 +865,23 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   Widget _construirTabHistorico() {
     return Column(
       children: [
-        const Text("ÚLTIMOS 7 DÍAS", style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const Text(
+          "ÚLTIMOS 7 DÍAS",
+          style: TextStyle(
+            color: Colors.teal,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
         const SizedBox(height: 16),
         ..._historicoMacros.map((dia) {
-          final porcentajeCal = _calcularPorcentaje((dia['calorias'] as num).toDouble(), _macrosObjetivo['calorias'] as double);
+          final porcentajeCal = _calcularPorcentaje(
+            (dia['calorias'] as num).toDouble(),
+            _macrosObjetivo['calorias'] as double,
+          );
           return Card(
-            color: const Color(0xFF072119),
+            color: Colors.grey.shade50,
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -654,18 +891,46 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("${dia['dia']} - ${dia['fecha']}", style: const TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold)),
-                      Text("${porcentajeCal.toStringAsFixed(0)}%", style: TextStyle(color: _obtenerColorProgreso((dia['calorias'] as num).toDouble(), _macrosObjetivo['calorias'] as double), fontWeight: FontWeight.bold)),
+                      Text(
+                        "${dia['dia']} - ${dia['fecha']}",
+                        style: const TextStyle(
+                          color: Colors.teal,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "${porcentajeCal.toStringAsFixed(0)}%",
+                        style: TextStyle(
+                          color: _obtenerColorProgreso(
+                            (dia['calorias'] as num).toDouble(),
+                            _macrosObjetivo['calorias'] as double,
+                          ),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _construirMacroMini("${(dia['calorias'] as num).toInt()}cal", Colors.greenAccent),
-                      _construirMacroMini("${(dia['proteinas'] as num).toStringAsFixed(0)}p", Colors.blueAccent),
-                      _construirMacroMini("${(dia['carbs'] as num).toStringAsFixed(0)}c", Colors.amberAccent),
-                      _construirMacroMini("${(dia['grasas'] as num).toStringAsFixed(0)}g", Colors.redAccent),
+                      _construirMacroMini(
+                        "${(dia['calorias'] as num).toInt()}cal",
+                        Colors.greenAccent,
+                      ),
+                      _construirMacroMini(
+                        "${(dia['proteinas'] as num).toStringAsFixed(0)}p",
+                        Colors.blueAccent,
+                      ),
+                      _construirMacroMini(
+                        "${(dia['carbs'] as num).toStringAsFixed(0)}c",
+                        Colors.amberAccent,
+                      ),
+                      _construirMacroMini(
+                        "${(dia['grasas'] as num).toStringAsFixed(0)}g",
+                        Colors.redAccent,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -675,7 +940,12 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                       value: porcentajeCal > 100 ? 1.0 : porcentajeCal / 100,
                       minHeight: 6,
                       backgroundColor: Colors.white12,
-                      valueColor: AlwaysStoppedAnimation<Color>(_obtenerColorProgreso((dia['calorias'] as num).toDouble(), _macrosObjetivo['calorias'] as double)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _obtenerColorProgreso(
+                          (dia['calorias'] as num).toDouble(),
+                          _macrosObjetivo['calorias'] as double,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -695,17 +965,31 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withOpacity(0.5), width: 1),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
-  Widget _construirMacroCard(String label, String consumido, String objetivo, Color color, double valConsumido, double valObjetivo) {
+  Widget _construirMacroCard(
+    String label,
+    String consumido,
+    String objetivo,
+    Color color,
+    double valConsumido,
+    double valObjetivo,
+  ) {
     final porcentaje = _calcularPorcentaje(valConsumido, valObjetivo);
-    
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF072119),
+        color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.3), width: 1.5),
       ),
@@ -715,10 +999,17 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: TextStyle(color: color, fontSize: 15, fontWeight: FontWeight.bold)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               Text(
                 "$consumido / $objetivo",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.black54, fontSize: 13),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -736,7 +1027,11 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           const SizedBox(height: 6),
           Text(
             "${porcentaje.toStringAsFixed(0)}%",
-            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -745,9 +1040,30 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
 
   String _obtenerFechaHoy() {
     final hoy = DateTime.now();
-    final dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
-    final meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    
+    final dias = [
+      'lunes',
+      'martes',
+      'miércoles',
+      'jueves',
+      'viernes',
+      'sábado',
+      'domingo',
+    ];
+    final meses = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+
     return "${dias[hoy.weekday - 1]}, ${hoy.day} de ${meses[hoy.month - 1]}";
   }
 

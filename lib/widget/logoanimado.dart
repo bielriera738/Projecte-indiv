@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class LogoAnimado extends StatefulWidget {
   const LogoAnimado({super.key});
 
@@ -14,9 +15,10 @@ class _LogoAnimadoState extends State<LogoAnimado>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 2))
-          ..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
     _animation = Tween<double>(begin: 0.9, end: 1.1).animate(_controller);
   }
 
