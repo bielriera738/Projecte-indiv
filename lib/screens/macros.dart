@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../services/exportarservicios.dart';
 
 class MacrosScreen extends StatefulWidget {
   const MacrosScreen({super.key});
@@ -78,6 +79,28 @@ Carbohidratos: $carbohidratosG g
 """;
       });
 
+      // Guardar automáticamente en historial
+      final prefs = await SharedPreferences.getInstance();
+      List<String> historial = prefs.getStringList('historial_exportaciones') ?? [];
+      
+      final exportacion = {
+        'fecha': DateTime.now().toIso8601String(),
+        'peso': pesoText,
+        'altura': alturaText,
+        'edad': edadText,
+        'objetivo': objetivo,
+        'resultado': resultado,
+        'calorias': calorias,
+        'proteinas': proteinasG,
+        'grasas': grasasG,
+        'carbohidratos': carbohidratosG,
+        'csv': 'Peso,Altura,Edad,Objetivo,Calorias,Proteinas,Grasas,Carbohidratos\n$pesoText,$alturaText,$edadText,$objetivo,$calorias,$proteinasG,$grasasG,$carbohidratosG',
+      };
+      
+      historial.insert(0, jsonEncode(exportacion));
+      if (historial.length > 20) historial = historial.sublist(0, 20);
+      await prefs.setStringList('historial_exportaciones', historial);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Macros calculados correctamente"),
@@ -114,53 +137,51 @@ Carbohidratos: $carbohidratosG g
     try {
       setState(() => _exportando = true);
 
-      // Contenido del CSV para guardar
+      // Contenido del CSV
       final csvContent = """Peso,Altura,Edad,Objetivo,Macros
 ${pesoController.text},${alturaController.text},${edadController.text},$objetivo,"$resultado"
 """;
 
-      // Intentar obtener carpeta de documentos
-      Directory? directory;
-      if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory(); // Carpeta accesible en Android
-      } else if (Platform.isWindows) {
-        directory = await getDownloadsDirectory(); // Descargas en Windows
-      }
+      // Guardar en historial local con SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      List<String> historial = prefs.getStringList('historial_exportaciones') ?? [];
       
-      // Fallback a documentos si los anteriores fallan
-      directory ??= await getApplicationDocumentsDirectory();
+      final exportacion = {
+        'fecha': DateTime.now().toIso8601String(),
+        'peso': pesoController.text,
+        'altura': alturaController.text,
+        'edad': edadController.text,
+        'objetivo': objetivo,
+        'resultado': resultado,
+        'csv': csvContent,
+      };
+      
+      historial.insert(0, jsonEncode(exportacion));
+      if (historial.length > 20) historial = historial.sublist(0, 20);
+      await prefs.setStringList('historial_exportaciones', historial);
 
-      final String fileName = "macros_nutrivision_${DateTime.now().millisecondsSinceEpoch}.csv";
-      final String filePath = "${directory.path}/$fileName";
-      final File file = File(filePath);
-      await file.writeAsString(csvContent);
+      // Guardar archivo CSV en Descargas (Windows) o almacenamiento externo (Android)
+      final fileName = "macros_nutrivision_${DateTime.now().millisecondsSinceEpoch}";
+      final savedPath = await ExportService.exportCSVString(csvContent, fileName);
 
       setState(() {
-        resultado = "$resultado\n\n✓ Archivo guardado en:\n$filePath";
+        resultado = "$resultado\n\nArchivo guardado en: $savedPath";
       });
-
-      // Intentar compartir el archivo (abre diálogo "Guardar en..." o compartir)
-      try {
-        await Share.shareXFiles(
-          [XFile(filePath)],
-          text: 'Mis Macros - NutriVision AI',
-          subject: 'Exportación de Macros',
-        );
-      } catch (e) {
-        debugPrint("No se pudo abrir el diálogo de compartir: $e");
-      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Archivo guardado en: $filePath"),
+            content: Text("CSV guardado: $savedPath"),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'COPIAR RUTA',
               textColor: Colors.white,
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: filePath));
+                Clipboard.setData(ClipboardData(text: savedPath));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ruta copiada')),
+                );
               },
             ),
           ),
@@ -168,7 +189,7 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
       }
     } catch (e) {
       setState(() {
-        resultado = "Error al exportar: $e\n(Prueba reiniciar la app)";
+        resultado = "Error al exportar: $e";
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -181,6 +202,52 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
     } finally {
       setState(() => _exportando = false);
     }
+  }
+
+  void _mostrarHistorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historial = prefs.getStringList('historial_exportaciones') ?? [];
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Historial de Exportaciones'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: historial.isEmpty
+              ? const Center(child: Text('No hay exportaciones guardadas'))
+              : ListView.builder(
+                  itemCount: historial.length,
+                  itemBuilder: (context, index) {
+                    final data = jsonDecode(historial[index]);
+                    final fecha = DateTime.parse(data['fecha']);
+                    return ListTile(
+                      title: Text('${data['peso']} kg - ${data['objetivo']}'),
+                      subtitle: Text('${fecha.day}/${fecha.month}/${fecha.year}'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.copy),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: data['csv']));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('CSV copiado')),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CERRAR'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

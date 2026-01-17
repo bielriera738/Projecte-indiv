@@ -10,16 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  csv: ^5.0.2
-  path_provider: ^2.0.15
   flutter_svg: ^2.2.1
   http: ^1.2.2
   google_fonts: ^6.1.0
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.3
-  sqflite_common_ffi: ^2.3.2
   fl_chart: ^0.70.0
-  share_plus: ^10.1.4
+  file_saver: ^0.2.14
 
 dev_dependencies:
   flutter_test:
