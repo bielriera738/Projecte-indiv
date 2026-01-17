@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MacrosScreen extends StatefulWidget {
   const MacrosScreen({super.key});
@@ -96,7 +99,7 @@ Carbohidratos: $carbohidratosG g
 
   Future<void> exportarCSV() async {
     if (_exportando) return;
-    
+
     if (resultado.isEmpty || pesoController.text.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,41 +111,65 @@ Carbohidratos: $carbohidratosG g
       }
       return;
     }
-    
+
     try {
       setState(() => _exportando = true);
 
-      final csvContent = """Datos de Macros - NutriVision AI
-=====================================
-Peso: ${pesoController.text} kg
-Altura: ${alturaController.text} cm
-Edad: ${edadController.text} años
-Objetivo: $objetivo
-
-RESULTADOS:
-$resultado
-
-Generado: ${DateTime.now().toString().split('.')[0]}
+      // Contenido del CSV para guardar
+      final csvContent = """Peso,Altura,Edad,Objetivo,Macros
+${pesoController.text},${alturaController.text},${edadController.text},$objetivo,"$resultado"
 """;
 
-      await Clipboard.setData(ClipboardData(text: csvContent));
+      // Intentar obtener carpeta de documentos
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory(); // Carpeta accesible en Android
+      } else if (Platform.isWindows) {
+        directory = await getDownloadsDirectory(); // Descargas en Windows
+      }
+      
+      // Fallback a documentos si los anteriores fallan
+      directory ??= await getApplicationDocumentsDirectory();
+
+      final String fileName = "macros_nutrivision_${DateTime.now().millisecondsSinceEpoch}.csv";
+      final String filePath = "${directory.path}/$fileName";
+      final File file = File(filePath);
+      await file.writeAsString(csvContent);
 
       setState(() {
-        resultado = "$resultado\n\n✓ Datos copiados al portapapeles";
+        resultado = "$resultado\n\n✓ Archivo guardado en:\n$filePath";
       });
+
+      // Intentar compartir el archivo (abre diálogo "Guardar en..." o compartir)
+      try {
+        await Share.shareXFiles(
+          [XFile(filePath)],
+          text: 'Mis Macros - NutriVision AI',
+          subject: 'Exportación de Macros',
+        );
+      } catch (e) {
+        debugPrint("No se pudo abrir el diálogo de compartir: $e");
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("✓ Datos copiados. Pégalos donde quieras guardarlos."),
+          SnackBar(
+            content: Text("Archivo guardado en: $filePath"),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'COPIAR RUTA',
+              textColor: Colors.white,
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: filePath));
+              },
+            ),
           ),
         );
       }
     } catch (e) {
       setState(() {
-        resultado = "Error al copiar: $e";
+        resultado = "Error al exportar: $e\n(Prueba reiniciar la app)";
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
