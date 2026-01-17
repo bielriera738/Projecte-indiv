@@ -18,6 +18,7 @@ class _MiPerfilState extends State<MiPerfil> {
   late TextEditingController _edadController;
   late TextEditingController _alturaController;
   late TextEditingController _pesoController;
+  late TextEditingController _pesoObjetivoController;
   late TextEditingController _emailController;
   late TextEditingController _nombrePerfilController;
 
@@ -61,6 +62,7 @@ class _MiPerfilState extends State<MiPerfil> {
     _edadController = TextEditingController();
     _alturaController = TextEditingController();
     _pesoController = TextEditingController();
+    _pesoObjetivoController = TextEditingController();
     _emailController = TextEditingController();
     _nombrePerfilController = TextEditingController();
     _cargarPerfil();
@@ -77,6 +79,128 @@ class _MiPerfilState extends State<MiPerfil> {
     });
   }
 
+  Future<void> _cargarPerfilGuardado(String nombrePerfil) async {
+    final prefs = await SharedPreferences.getInstance();
+    final perfilJson = prefs.getString('perfil_$nombrePerfil');
+    
+    if (perfilJson != null) {
+      final perfil = jsonDecode(perfilJson);
+      
+      // Guardar como perfil activo
+      await prefs.setString('perfil_completo', perfilJson);
+      await prefs.setString('ultimo_usuario', nombrePerfil);
+      
+      setState(() {
+        _nombreController.text = perfil['nombre']?.toString() ?? '';
+        _edadController.text = perfil['edad']?.toString() ?? '';
+        _alturaController.text = perfil['altura']?.toString() ?? '';
+        _pesoController.text = perfil['peso']?.toString() ?? '';
+        _pesoObjetivoController.text = perfil['pesoObjetivo']?.toString() ?? '';
+        _emailController.text = perfil['email']?.toString() ?? '';
+        _genero = perfil['genero']?.toString() ?? '';
+        _objetivo = perfil['objetivo']?.toString() ?? '';
+        _nivelActividad = perfil['nivelActividad']?.toString() ?? '';
+        _alergiasSeleccionadas = List<String>.from(perfil['alergias'] ?? []);
+        _preferenciasSeleccionadas = List<String>.from(perfil['preferencias'] ?? []);
+        _ultimoUsuario = nombrePerfil;
+        _modoEdicion = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Perfil "$nombrePerfil" cargado'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se encontró el perfil "$nombrePerfil"'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _mostrarSelectorUsuarios() {
+    if (_perfilesGuardados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay perfiles guardados'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.people, color: Colors.teal, size: 28),
+                const SizedBox(width: 12),
+                const Text(
+                  'Seleccionar Usuario',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            ..._perfilesGuardados.map((perfil) => ListTile(
+              leading: CircleAvatar(
+                backgroundColor: perfil == _ultimoUsuario ? Colors.teal : Colors.grey.shade300,
+                child: Icon(
+                  Icons.person,
+                  color: perfil == _ultimoUsuario ? Colors.white : Colors.black54,
+                ),
+              ),
+              title: Text(
+                perfil,
+                style: TextStyle(
+                  fontWeight: perfil == _ultimoUsuario ? FontWeight.bold : FontWeight.normal,
+                  color: Colors.black87,
+                ),
+              ),
+              subtitle: perfil == _ultimoUsuario 
+                  ? const Text('Usuario activo', style: TextStyle(color: Colors.teal))
+                  : null,
+              trailing: perfil == _ultimoUsuario 
+                  ? const Icon(Icons.check_circle, color: Colors.teal)
+                  : const Icon(Icons.chevron_right, color: Colors.grey),
+              onTap: () {
+                Navigator.pop(context);
+                if (perfil != _ultimoUsuario) {
+                  _cargarPerfilGuardado(perfil);
+                }
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _cargarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
     final perfilJson = prefs.getString('perfil_completo');
@@ -88,6 +212,7 @@ class _MiPerfilState extends State<MiPerfil> {
         _edadController.text = perfil['edad']?.toString() ?? '';
         _alturaController.text = perfil['altura']?.toString() ?? '';
         _pesoController.text = perfil['peso']?.toString() ?? '';
+        _pesoObjetivoController.text = perfil['pesoObjetivo']?.toString() ?? '';
         _emailController.text = perfil['email']?.toString() ?? '';
         _genero = perfil['genero']?.toString() ?? '';
         _objetivo = perfil['objetivo']?.toString() ?? '';
@@ -141,6 +266,19 @@ class _MiPerfilState extends State<MiPerfil> {
       int grasas = (calorias * 0.25 / 9).toInt();
       int carbohidratos = ((calorias - (proteinas * 4 + grasas * 9)) / 4)
           .toInt();
+      
+      String estimacion = '';
+      final pesoObj = double.tryParse(_pesoObjetivoController.text);
+      if (pesoObj != null && pesoObj > 0) {
+        double diff = (peso - pesoObj).abs();
+        if (diff < 0.5) {
+          estimacion = '¡Ya estás en tu peso!';
+        } else {
+          // Asumiendo cambio de 0.4kg/semana aprox con déficit/superávit estándar
+          int semanas = (diff / 0.4).ceil();
+          estimacion = 'Aprox. $semanas semanas';
+        }
+      }
 
       return {
         'calorias': calorias,
@@ -148,6 +286,7 @@ class _MiPerfilState extends State<MiPerfil> {
         'grasas': grasas,
         'carbohidratos': carbohidratos,
         'tdee': tdee.toStringAsFixed(2),
+        'estimacion': estimacion,
       };
     } catch (e) {
       return {'error': 'Error al calcular: $e'};
@@ -174,6 +313,7 @@ class _MiPerfilState extends State<MiPerfil> {
         'edad': int.parse(_edadController.text),
         'altura': double.parse(_alturaController.text),
         'peso': double.parse(_pesoController.text),
+        'pesoObjetivo': double.tryParse(_pesoObjetivoController.text) ?? 0.0,
         'email': _emailController.text,
         'genero': _genero,
         'objetivo': _objetivo,
@@ -215,35 +355,24 @@ class _MiPerfilState extends State<MiPerfil> {
         // ignorar errores de red aquí; el registro queda en SharedPreferences
       }
 
-      // Intentar sincronizar la entrada de seguimiento con backend (no bloqueante)
+      // Intentar sincronizar perfil con backend (no bloqueante)
       try {
-        final syncUrl = Uri.parse(
-          'http://192.168.1.100:8000/guardar-seguimiento/',
-        );
+        final url = Uri.parse("http://192.168.1.100:8000/actualizar-perfil/");
         await http
-            .post(
-              syncUrl,
-              headers: {'Content-Type': 'application/json'},
-              body: seguimientoEntry,
+            .put(
+              url,
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode(perfilActualizado),
             )
-            .timeout(const Duration(seconds: 8));
+            .timeout(const Duration(seconds: 10));
       } catch (_) {
-        // ignorar errores de red aquí; el registro queda en SharedPreferences
+        // ignorar errores de red; el perfil queda guardado localmente
       }
-
-      final url = Uri.parse("http://192.168.1.100:8000/actualizar-perfil/");
-      await http
-          .put(
-            url,
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode(perfilActualizado),
-          )
-          .timeout(const Duration(seconds: 10));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Perfil actualizado correctamente'),
+            content: Text('Perfil actualizado correctamente'),
             backgroundColor: Colors.green,
           ),
         );
@@ -255,7 +384,7 @@ class _MiPerfilState extends State<MiPerfil> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
         setState(() => _enviando = false);
       }
@@ -284,7 +413,7 @@ class _MiPerfilState extends State<MiPerfil> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 "Cancelar",
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: Colors.white70),
               ),
             ),
             TextButton(
@@ -296,7 +425,7 @@ class _MiPerfilState extends State<MiPerfil> {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('✅ Sesión cerrada correctamente'),
+                      content: Text('Sesión cerrada correctamente'),
                       backgroundColor: Colors.green,
                       duration: Duration(seconds: 2),
                     ),
@@ -326,7 +455,7 @@ class _MiPerfilState extends State<MiPerfil> {
     if (_nombrePerfilController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('❌ Por favor ingresa un nombre para el perfil'),
+          content: Text('Por favor ingresa un nombre para el perfil'),
           backgroundColor: Colors.red,
         ),
       );
@@ -394,7 +523,7 @@ class _MiPerfilState extends State<MiPerfil> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✅ Perfil "${_nombrePerfilController.text}" guardado correctamente',
+              'Perfil "${_nombrePerfilController.text}" guardado correctamente',
             ),
             backgroundColor: Colors.green,
           ),
@@ -407,7 +536,7 @@ class _MiPerfilState extends State<MiPerfil> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -538,6 +667,7 @@ class _MiPerfilState extends State<MiPerfil> {
     _edadController.dispose();
     _alturaController.dispose();
     _pesoController.dispose();
+    _pesoObjetivoController.dispose();
     _emailController.dispose();
     _nombrePerfilController.dispose();
     super.dispose();
@@ -561,6 +691,38 @@ class _MiPerfilState extends State<MiPerfil> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // Botón selector de usuarios guardados
+          if (_perfilesGuardados.isNotEmpty)
+            Tooltip(
+              message: "Usuarios guardados",
+              child: Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.people_alt, color: Colors.teal, size: 26),
+                    onPressed: _mostrarSelectorUsuarios,
+                  ),
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${_perfilesGuardados.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Tooltip(
             message: "Cerrar sesión",
             child: IconButton(
@@ -690,6 +852,12 @@ class _MiPerfilState extends State<MiPerfil> {
                       keyboardType: TextInputType.number,
                       icon: Icons.monitor_weight,
                     ),
+                    _buildTextField(
+                      "Peso Objetivo (kg)",
+                      _pesoObjetivoController,
+                      keyboardType: TextInputType.number,
+                      icon: Icons.flag,
+                    ),
 
                     const SizedBox(height: 20),
                     const Divider(color: Colors.tealAccent, thickness: 1),
@@ -709,6 +877,24 @@ class _MiPerfilState extends State<MiPerfil> {
                       (value) => setState(() => _nivelActividad = value ?? ''),
                       icon: Icons.directions_run,
                     ),
+
+                    const SizedBox(height: 20),
+                    
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text("Preferencias Alimentarias", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildChipList(preferenciasDisponibles, _preferenciasSeleccionadas),
+                    
+                    const SizedBox(height: 16),
+                    
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text("Alergias / Intolerancias", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildChipList(alergiasDisponibles, _alergiasSeleccionadas),
 
                     const SizedBox(height: 28),
 
@@ -745,26 +931,50 @@ class _MiPerfilState extends State<MiPerfil> {
                                 ],
                               ),
                               const SizedBox(height: 14),
+                              
+                              if (macros['estimacion'] != null && macros['estimacion'] != '')
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.blueAccent),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.timer, color: Colors.blueAccent),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "Tiempo estimado: ${macros['estimacion']}",
+                                          style: const TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
                               _filasMacro(
-                                "🔥 Calorías",
+                                "Calorías",
                                 "${macros['calorias']} kcal",
                                 Colors.redAccent,
                               ),
                               const SizedBox(height: 10),
                               _filasMacro(
-                                "🥚 Proteínas",
+                                "Proteínas",
                                 "${macros['proteinas']} g",
                                 Colors.blueAccent,
                               ),
                               const SizedBox(height: 10),
                               _filasMacro(
-                                "🍞 Carbohidratos",
+                                "Carbohidratos",
                                 "${macros['carbohidratos']} g",
                                 Colors.amberAccent,
                               ),
                               const SizedBox(height: 10),
                               _filasMacro(
-                                "🥑 Grasas",
+                                "Grasas",
                                 "${macros['grasas']} g",
                                 Colors.greenAccent,
                               ),
@@ -893,7 +1103,7 @@ class _MiPerfilState extends State<MiPerfil> {
                     if (_mostrarGuardarPerfil) ...[
                       const SizedBox(height: 20),
                       Card(
-                        color: Colors.grey.shade50,
+                        color: Colors.white,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -958,13 +1168,13 @@ class _MiPerfilState extends State<MiPerfil> {
                                 children: [
                                   Icon(
                                     Icons.folder_open,
-                                    color: Colors.tealAccent,
+                                    color: Colors.teal,
                                   ),
                                   SizedBox(width: 10),
                                   Text(
                                     "Perfiles Guardados",
                                     style: TextStyle(
-                                      color: Colors.tealAccent,
+                                      color: Colors.teal,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -980,10 +1190,10 @@ class _MiPerfilState extends State<MiPerfil> {
                                   child: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: Colors.tealAccent.withOpacity(0.1),
+                                      color: Colors.teal.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
-                                        color: Colors.tealAccent,
+                                        color: Colors.teal,
                                         width: 1,
                                       ),
                                     ),
@@ -994,7 +1204,7 @@ class _MiPerfilState extends State<MiPerfil> {
                                         Text(
                                           perfil,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: Colors.black87,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -1002,7 +1212,7 @@ class _MiPerfilState extends State<MiPerfil> {
                                         IconButton(
                                           icon: const Icon(
                                             Icons.copy,
-                                            color: Colors.tealAccent,
+                                            color: Colors.teal,
                                             size: 20,
                                           ),
                                           onPressed: () {
@@ -1045,7 +1255,7 @@ class _MiPerfilState extends State<MiPerfil> {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          style: const TextStyle(color: Colors.white, fontSize: 16),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

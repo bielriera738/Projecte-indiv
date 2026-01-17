@@ -33,7 +33,7 @@ class _LogoAnimadoState extends State<LogoAnimado>
     return ScaleTransition(
       scale: _animation,
       child: Image.asset(
-        'assets/images/Logo.png', // o Logo.svg si usas svg
+        'assets/images/Logo.png',
         height: 50,
       ),
     );

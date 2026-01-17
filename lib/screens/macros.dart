@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 
 class MacrosScreen extends StatefulWidget {
   const MacrosScreen({super.key});
@@ -17,8 +16,6 @@ class _MacrosScreenState extends State<MacrosScreen> {
   String resultado = "";
   bool _calculando = false;
   bool _exportando = false;
-
-  // 📊 Cálculo de macros
 
   Future<void> calcular() async {
     if (_calculando) return;
@@ -44,8 +41,7 @@ class _MacrosScreenState extends State<MacrosScreen> {
       final altura = double.parse(alturaText.replaceAll(",", "."));
       final edad = int.parse(edadText);
 
-      // 🔄 CÁLCULO LOCAL (sin backend, sin ApiService)
-      // Fórmula Mifflin-St Jeor (género masculino, actividad ligera)
+      // Cálculo local usando fórmula Mifflin-St Jeor (género masculino, actividad ligera)
       double tdee = (10 * peso + 6.25 * altura - 5 * edad + 5) * 1.375;
 
       int calorias;
@@ -82,13 +78,13 @@ Carbohidratos: $carbohidratosG g
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("✅ Macros calculados correctamente"),
+          content: Text("Macros calculados correctamente"),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       setState(() {
-        resultado = "❌ Error: $e";
+        resultado = "Error: $e";
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
@@ -98,45 +94,64 @@ Carbohidratos: $carbohidratosG g
     }
   }
 
-  // 📤 Exportar resultados a CSV en ubicación local
   Future<void> exportarCSV() async {
     if (_exportando) return;
+    
+    if (resultado.isEmpty || pesoController.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Primero calcula tus macros antes de exportar"),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+    
     try {
       setState(() => _exportando = true);
 
-      final appDir = await getApplicationDocumentsDirectory();
-      String fileName = "macros_${DateTime.now().millisecondsSinceEpoch}.csv";
-      String filePath = "${appDir.path}/$fileName";
+      final csvContent = """Datos de Macros - NutriVision AI
+=====================================
+Peso: ${pesoController.text} kg
+Altura: ${alturaController.text} cm
+Edad: ${edadController.text} años
+Objetivo: $objetivo
 
-      final csvString =
-          """Peso,Altura,Edad,Objetivo,Macros
-${pesoController.text},${alturaController.text},${edadController.text},$objetivo,"$resultado"
+RESULTADOS:
+$resultado
+
+Generado: ${DateTime.now().toString().split('.')[0]}
 """;
 
-      final file = File(filePath);
-      await file.writeAsString(csvString);
+      await Clipboard.setData(ClipboardData(text: csvContent));
 
       setState(() {
-        resultado = "✅ Datos exportados en:\n$filePath";
+        resultado = "$resultado\n\n✓ Datos copiados al portapapeles";
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("📁 Datos exportados correctamente en:\n$filePath"),
-          backgroundColor: Colors.orangeAccent,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("✓ Datos copiados. Pégalos donde quieras guardarlos."),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
       setState(() {
-        resultado = "❌ Error al exportar: $e";
+        resultado = "Error al copiar: $e";
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error al exportar: $e"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     } finally {
       setState(() => _exportando = false);
     }
@@ -410,7 +425,6 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
     );
   }
 
-  // 📋 Campo de texto reutilizable para números, más grande y personalizado
   Widget _campoTextoNumeric({
     required String label,
     required TextEditingController controller,
@@ -440,7 +454,6 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
     );
   }
 
-  // 🎨 Estilo visual de los campos
   InputDecoration _decoracionCampo(String label) {
     return InputDecoration(
       labelText: label,

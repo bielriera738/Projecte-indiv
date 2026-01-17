@@ -73,9 +73,6 @@ class MenuPanel extends StatelessWidget {
   }
 }
 
-//------------------------------------------------------
-// ⭐ TARJETAS PREMIUM DEL MENÚ — 3D + ANIMACIÓN
-//------------------------------------------------------
 class MenuCard extends StatefulWidget {
   final IconData icon;
   final String text;

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-// ============================================================================
-// CONSTANTES GLOBALES DE COLORES Y ESTILOS
-// ============================================================================
 const Color colorPrimarioTitulo =
     Colors.teal; // Mantener verde para el título "NutriVision AI"
 const Color colorFondo = Colors.white; // Fondo blanco
@@ -32,8 +31,6 @@ const TextStyle textoSecundario = TextStyle(
   color: colorTextoSecundario,
   fontSize: 13,
 );
-
-// ============================================================================
 
 class Receta {
   final String id;
@@ -543,7 +540,6 @@ final List<Receta> recetasDatabase = [
     ],
   ),
 
-  // ======================= DESAYUNO (más combinaciones) =======================
   Receta(
     id: '18',
     titulo: 'Huevos Revueltos con Aguacate (Keto)',
@@ -643,7 +639,6 @@ final List<Receta> recetasDatabase = [
     ],
   ),
 
-  // ======================= COMIDA (más combinaciones) =======================
   Receta(
     id: '22',
     titulo: 'Bowl de Arroz + Atún (Post-entreno)',
@@ -790,7 +785,6 @@ final List<Receta> recetasDatabase = [
     ],
   ),
 
-  // ======================= CENA (más combinaciones) =======================
   Receta(
     id: '28',
     titulo: 'Salteado de Pavo con Verduras (Definición)',
@@ -887,7 +881,6 @@ final List<Receta> recetasDatabase = [
     ],
   ),
 
-  // ======================= SNACK (más combinaciones) =======================
   Receta(
     id: '32',
     titulo: 'Skyr/Yogur Proteico con Fruta (Definición)',
@@ -1128,9 +1121,35 @@ class _RecetasScreenState extends State<RecetasScreen> {
   // filtros y paginación
   Set<String> selectedCategories = {};
   Set<String> selectedTags = {};
-  bool _showRecommended = false; // Nuevo estado para recomendaciones
+  bool _showRecommended = false;
   int currentPage = 1;
-  int pageSize = 6;
+  int pageSize = 3; // Cambiado de 6 a 3
+  
+  // Preferencias de usuario
+  List<String> _userAlergias = [];
+  List<String> _userPreferencias = [];
+  bool _profileLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final perfilJson = prefs.getString('perfil_completo');
+    if (perfilJson != null) {
+      final data = jsonDecode(perfilJson);
+      if (mounted) {
+        setState(() {
+          _userAlergias = List<String>.from(data['alergias'] ?? []);
+          _userPreferencias = List<String>.from(data['preferencias'] ?? []);
+          _profileLoaded = true;
+        });
+      }
+    }
+  }
 
   List<String> getAllCategories() {
     final set = <String>{};
@@ -1156,12 +1175,87 @@ class _RecetasScreenState extends State<RecetasScreen> {
 
     var list = recetasDatabase.toList();
 
-    // Si se activan recomendaciones, filtramos primero por criterios "seguros"
+    // 1. Filtrado de SEGURIDAD por Perfil (Alergias y Preferencias)
+    // Solo aplicar si el perfil está cargado Y tiene restricciones reales
+    if (_profileLoaded) {
+      // Verificar si hay alergias reales (no "Ninguno" y lista no vacía)
+      final tieneAlergiasReales = _userAlergias.isNotEmpty && 
+                                   !_userAlergias.contains('Ninguno') &&
+                                   _userAlergias.any((a) => a != 'Ninguno');
+      
+      // Verificar si hay preferencias reales (no "Sin restricciones" y lista no vacía)
+      final tienePreferenciasReales = _userPreferencias.isNotEmpty && 
+                                       !_userPreferencias.contains('Sin restricciones') &&
+                                       _userPreferencias.any((p) => p != 'Sin restricciones');
+      
+      if (tieneAlergiasReales || tienePreferenciasReales) {
+        list = list.where((r) {
+          // Exclusiones por Alergia
+          if (tieneAlergiasReales) {
+            if (_userAlergias.contains('Gluten')) {
+              // Si tiene alergia al gluten, solo mostrar recetas "Sin gluten" o que no tengan gluten
+              bool tieneGluten = r.ingredientes.any((ing) => 
+                ing.toLowerCase().contains('pasta') ||
+                ing.toLowerCase().contains('pan ') ||
+                ing.toLowerCase().contains('harina') ||
+                ing.toLowerCase().contains('avena')
+              ) && !r.tags.any((t) => t.toLowerCase().contains('sin gluten'));
+              if (tieneGluten) return false;
+            }
+            if (_userAlergias.contains('Lácteos')) {
+              // Si tiene alergia a lácteos, excluir recetas con lácteos
+              bool tieneLacteos = r.ingredientes.any((ing) => 
+                ing.toLowerCase().contains('leche') ||
+                ing.toLowerCase().contains('queso') ||
+                ing.toLowerCase().contains('yogur') ||
+                ing.toLowerCase().contains('nata')
+              ) && !r.tags.any((t) => t.toLowerCase().contains('sin lactosa') || t == 'Vegano');
+              if (tieneLacteos) return false;
+            }
+            if (_userAlergias.contains('Mariscos')) {
+              bool tieneMariscos = r.ingredientes.any((ing) => 
+                ing.toLowerCase().contains('marisco') ||
+                ing.toLowerCase().contains('gamba') ||
+                ing.toLowerCase().contains('langostino') ||
+                ing.toLowerCase().contains('mejillón')
+              );
+              if (tieneMariscos) return false;
+            }
+          }
+          
+          // Exclusiones por Preferencia alimentaria
+          if (tienePreferenciasReales) {
+            if (_userPreferencias.contains('Vegano')) {
+              if (!r.tags.contains('Vegano')) return false;
+            } else if (_userPreferencias.contains('Vegetariano')) {
+              // Vegetariano: sin carne ni pescado
+              bool tieneCarne = r.ingredientes.any((ing) => 
+                ing.toLowerCase().contains('pollo') ||
+                ing.toLowerCase().contains('ternera') ||
+                ing.toLowerCase().contains('pavo') ||
+                ing.toLowerCase().contains('cerdo') ||
+                ing.toLowerCase().contains('salmón') ||
+                ing.toLowerCase().contains('atún') ||
+                ing.toLowerCase().contains('pescado') ||
+                ing.toLowerCase().contains('bacalao') ||
+                ing.toLowerCase().contains('merluza')
+              );
+              if (tieneCarne && !r.tags.contains('Vegano') && !r.tags.contains('Vegetariano')) return false;
+            }
+          }
+          
+          return true;
+        }).toList();
+      }
+    }
+
+    // 2. Si se activan recomendaciones, filtramos por criterios "seguros"
     if (_showRecommended) {
       list = list.where((r) =>
         r.tags.contains('Equilibrado') || 
         r.tags.contains('Mantenimiento') ||
-        r.tags.contains('Saludable')
+        r.tags.contains('Ligero') ||
+        r.tags.contains('Alto en proteína')
       ).toList();
     }
 
@@ -1600,22 +1694,22 @@ class _RecetaDetailScreenState extends State<RecetaDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _infoBox(
-                    '🔥',
+                    '',
                     '${(widget.receta.calorias * factor).round()}',
                     'kcal',
                   ),
                   _infoBox(
-                    '🥚',
+                    '',
                     '${(widget.receta.proteinas * factor).round()}g',
                     'Proteína',
                   ),
                   _infoBox(
-                    '🍞',
+                    '',
                     '${(widget.receta.carbohidratos * factor).round()}g',
                     'Carbs',
                   ),
                   _infoBox(
-                    '🥑',
+                    '',
                     '${(widget.receta.grasas * factor).round()}g',
                     'Grasas',
                   ),
@@ -1658,7 +1752,7 @@ class _RecetaDetailScreenState extends State<RecetaDetailScreen> {
               scaleIngredientes: true,
             ),
             const SizedBox(height: 24),
-            _seccion('👨‍🍳 Pasos de Preparación', widget.receta.pasos),
+            _seccion('Pasos de Preparación', widget.receta.pasos),
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
@@ -1670,7 +1764,7 @@ class _RecetaDetailScreenState extends State<RecetaDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('🏷️ Tags', style: tituloSeccion),
+                  const Text('Tags', style: tituloSeccion),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,

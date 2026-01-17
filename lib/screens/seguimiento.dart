@@ -148,7 +148,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         }
       }
     } catch (e) {
-      debugPrint("❌ Error cargando perfil: $e");
+      debugPrint("Error cargando perfil: $e");
     }
   }
 
@@ -189,7 +189,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         });
       }
     } catch (e) {
-      debugPrint("❌ Error cargando comidas: $e");
+      debugPrint("Error cargando comidas: $e");
     }
   }
 
@@ -226,7 +226,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         }
       }
     } catch (e) {
-      debugPrint("❌ Error cargando recetas: $e");
+      debugPrint("Error cargando recetas: $e");
     }
   }
 
@@ -270,7 +270,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         setState(() => _historicoMacros = historicoList.reversed.toList());
       }
     } catch (e) {
-      debugPrint("❌ Error cargando histórico: $e");
+      debugPrint("Error cargando histórico: $e");
     }
   }
 
@@ -291,20 +291,20 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
 
   Future<void> _agregarComida() async {
     if (_alimentoSeleccionado.isEmpty || _gramosController.text.isEmpty) {
-      _mostrarMensaje("❌ Selecciona alimento y cantidad", Colors.red);
+      _mostrarMensaje("Selecciona alimento y cantidad", Colors.red);
       return;
     }
 
     try {
       final gramos = double.tryParse(_gramosController.text);
       if (gramos == null || gramos <= 0) {
-        _mostrarMensaje("❌ Ingresa una cantidad válida", Colors.red);
+        _mostrarMensaje("Ingresa una cantidad válida", Colors.red);
         return;
       }
 
       final alimento = baseAlimentos[_alimentoSeleccionado];
       if (alimento == null) {
-        _mostrarMensaje("❌ Alimento no encontrado", Colors.red);
+        _mostrarMensaje("Alimento no encontrado", Colors.red);
         return;
       }
 
@@ -337,9 +337,9 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       setState(() => _alimentoSeleccionado = '');
 
       await _cargarComidayDelDia();
-      _mostrarMensaje("✅ ${alimento['nombre']} agregado", Colors.green);
+      _mostrarMensaje("${alimento['nombre']} agregado", Colors.green);
     } catch (e) {
-      _mostrarMensaje("❌ Error: $e", Colors.red);
+      _mostrarMensaje("Error: $e", Colors.red);
       debugPrint("Error agregando comida: $e");
     }
   }
@@ -385,7 +385,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         backgroundColor: Colors.black87,
         appBar: AppBar(
           title: const Text(
-            "📊 Seguimiento",
+            "Seguimiento",
             style: TextStyle(
               color: Colors.teal,
               fontWeight: FontWeight.bold,
@@ -407,7 +407,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       backgroundColor: Colors.black87,
       appBar: AppBar(
         title: const Text(
-          "📊 Seguimiento",
+          "Seguimiento",
           style: TextStyle(
             color: Colors.teal,
             fontWeight: FontWeight.bold,
@@ -424,9 +424,9 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
               color: Colors.grey.shade100,
               child: Row(
                 children: [
-                  _construirTab(0, "📅 Hoy", Icons.today),
-                  _construirTab(1, "🍽️ Recetas", Icons.restaurant),
-                  _construirTab(2, "📈 Histórico", Icons.show_chart),
+                  _construirTab(0, "Hoy", Icons.today),
+                  _construirTab(1, "Recetas", Icons.restaurant),
+                  _construirTab(2, "Histórico", Icons.show_chart),
                 ],
               ),
             ),
@@ -505,7 +505,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                 const CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.teal,
-                  child: Icon(Icons.person, color: Colors.black87, size: 30),
+                  child: Icon(Icons.person, color: Colors.white, size: 30),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -556,7 +556,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
               const Text(
                 "CALORÍAS HOY",
                 style: TextStyle(
-                  color: Colors.black87,
+                  color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1,
@@ -571,14 +571,14 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                       Text(
                         "${_macrosConsumidos['calorias'].toStringAsFixed(0)}",
                         style: const TextStyle(
-                          color: Colors.black87,
+                          color: Colors.white,
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Text(
                         "Consumido",
-                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -588,14 +588,14 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                       Text(
                         "${_macrosObjetivo['calorias'].toInt()}",
                         style: const TextStyle(
-                          color: Colors.black87,
+                          color: Colors.white,
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Text(
                         "Objetivo",
-                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -625,7 +625,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
               Text(
                 "${_calcularPorcentaje(_macrosConsumidos['calorias'], _macrosObjetivo['calorias']).toStringAsFixed(0)}% completado",
                 style: const TextStyle(
-                  color: Colors.black87,
+                  color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -647,7 +647,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         const SizedBox(height: 16),
 
         _construirMacroCard(
-          "🥚 Proteínas",
+          "Proteínas",
           "${_macrosConsumidos['proteinas'].toStringAsFixed(1)}g",
           "${_macrosObjetivo['proteinas'].toInt()}g",
           Colors.blueAccent,
@@ -657,7 +657,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         const SizedBox(height: 12),
 
         _construirMacroCard(
-          "🍞 Carbohidratos",
+          "Carbohidratos",
           "${_macrosConsumidos['carbs'].toStringAsFixed(1)}g",
           "${_macrosObjetivo['carbs'].toInt()}g",
           Colors.amberAccent,
@@ -667,7 +667,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         const SizedBox(height: 12),
 
         _construirMacroCard(
-          "🥑 Grasas",
+          "Grasas",
           "${_macrosConsumidos['grasas'].toStringAsFixed(1)}g",
           "${_macrosObjetivo['grasas'].toInt()}g",
           Colors.greenAccent,
@@ -709,11 +709,11 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         "Selecciona alimento",
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(color: Colors.white70),
                       ),
                     ),
                     dropdownColor: Colors.black87,
-                    style: const TextStyle(color: Colors.black87, fontSize: 15),
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
                     icon: const Icon(Icons.arrow_drop_down, color: Colors.teal),
                     underline: const SizedBox(),
                     items: baseAlimentos.entries.map((e) {
@@ -721,7 +721,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                         value: e.key,
                         child: Text(
                           e.value['nombre'] as String,
-                          style: const TextStyle(color: Colors.black87),
+                          style: const TextStyle(color: Colors.white),
                         ),
                       );
                     }).toList(),
@@ -733,10 +733,10 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                 TextField(
                   controller: _gramosController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.black87),
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: "Gramos (ej: 150)",
-                    hintStyle: const TextStyle(color: Colors.black38),
+                    hintStyle: const TextStyle(color: Colors.white54),
                     filled: true,
                     fillColor: Colors.black87,
                     prefixIcon: const Icon(Icons.scale, color: Colors.teal),
@@ -762,18 +762,19 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
-                      foregroundColor: Colors.black87,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: const Icon(Icons.add_circle_outline, size: 22),
+                    icon: const Icon(Icons.add_circle_outline, size: 22, color: Colors.white),
                     label: const Text(
                       "Agregar Comida",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: Colors.white,
                       ),
                     ),
                     onPressed: _agregarComida,
