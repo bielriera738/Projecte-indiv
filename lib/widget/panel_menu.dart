@@ -42,7 +42,7 @@ class MenuPanel extends StatelessWidget {
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.w800,
-              color: Colors.teal,
+              color: Colors.black, // Cambiado de teal a black
               letterSpacing: 0.8,
             ),
           ),
