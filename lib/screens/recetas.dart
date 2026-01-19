@@ -1377,7 +1377,7 @@ class _RecetasScreenState extends State<RecetasScreen> {
                           title: const Text('Ver platos recomendados', style: textoNormal),
                           subtitle: const Text('Muestra opciones equilibradas y seguras', style: textoSecundario),
                           value: _showRecommended,
-                          activeColor: colorPrimarioTitulo,
+                          activeThumbColor: colorPrimarioTitulo,
                           contentPadding: EdgeInsets.zero,
                           onChanged: (bool value) {
                             setState(() {
