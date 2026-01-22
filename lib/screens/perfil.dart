@@ -477,6 +477,7 @@ class _MiPerfilState extends State<MiPerfil> {
         'edad': int.parse(_edadController.text),
         'altura': double.parse(_alturaController.text),
         'peso': double.parse(_pesoController.text),
+        'pesoObjetivo': double.tryParse(_pesoObjetivoController.text) ?? 0.0,
         'email': _emailController.text,
         'genero': _genero,
         'objetivo': _objetivo,
@@ -493,6 +494,9 @@ class _MiPerfilState extends State<MiPerfil> {
         'perfil_${_nombrePerfilController.text}',
         jsonEncode(perfilGuardado),
       );
+      
+      // También guardar como perfil activo
+      await prefs.setString('perfil_completo', jsonEncode(perfilGuardado));
 
       // Guardar como último usuario (usamos el nombre del perfil guardado) y registrar seguimiento
       await prefs.setString('ultimo_usuario', _nombrePerfilController.text);
@@ -505,19 +509,26 @@ class _MiPerfilState extends State<MiPerfil> {
       historial.add(seguimientoEntry);
       await prefs.setStringList(seguimientoKey, historial);
 
-      _perfilesGuardados.add(_nombrePerfilController.text);
-      await prefs.setStringList('perfiles_guardados', _perfilesGuardados);
+      if (!_perfilesGuardados.contains(_nombrePerfilController.text)) {
+        _perfilesGuardados.add(_nombrePerfilController.text);
+        await prefs.setStringList('perfiles_guardados', _perfilesGuardados);
+      }
 
-      final url = Uri.parse(
-        "http://192.168.1.100:8000/guardar-perfil-completo/",
-      );
-      await http
-          .post(
-            url,
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode(perfilGuardado),
-          )
-          .timeout(const Duration(seconds: 10));
+      // Intentar sincronizar con backend (no bloqueante)
+      try {
+        final url = Uri.parse(
+          "http://192.168.1.100:8000/guardar-perfil-completo/",
+        );
+        await http
+            .post(
+              url,
+              headers: {"Content-Type": "application/json"},
+              body: jsonEncode(perfilGuardado),
+            )
+            .timeout(const Duration(seconds: 10));
+      } catch (_) {
+        // ignorar errores de red; el perfil queda guardado localmente
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -530,6 +541,8 @@ class _MiPerfilState extends State<MiPerfil> {
         );
         setState(() {
           _mostrarGuardarPerfil = false;
+          _ultimoUsuario = _nombrePerfilController.text;
+          _modoEdicion = false;
           _nombrePerfilController.clear();
         });
       }
