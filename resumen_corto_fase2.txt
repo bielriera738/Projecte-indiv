@@ -1,0 +1,1 @@
+Sistema integral que vincula perfil, macros y recetas para una nutrición personalizada.

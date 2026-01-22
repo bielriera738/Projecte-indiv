@@ -1,0 +1,16 @@
+Puntos para la diapositiva: "Recetas Personalizadas en NutriVision AI"
+
+*   **Adaptación Inteligente al Perfil del Usuario:**
+    El sistema filtra automáticamente el catálogo de recetas basándose en las alergias (como gluten o lácteos) y preferencias dietéticas (vegano, vegetariano) del usuario, garantizando que cada sugerencia sea segura y relevante.
+
+*   **Búsqueda por Objetivos Nutricionales:**
+    Más allá de las categorías tradicionales (desayuno, comida, cena), los usuarios pueden filtrar recetas según sus metas fitness específicas, como "Definición", "Volumen", "Keto" o "Recuperación Post-entreno".
+
+*   **Transparencia Nutricional Completa:**
+    Cada receta proporciona un desglose detallado de macronutrientes (proteínas, carbohidratos, grasas) y calorías, permitiendo a los usuarios mantener un control preciso sobre su ingesta diaria sin complicaciones.
+
+*   **Recomendaciones Saludables al Instante:**
+    Incluye una función de recomendación rápida que destaca platos equilibrados, ligeros y altos en proteínas, ideal para usuarios que buscan opciones saludables sin perder tiempo buscando.
+
+*   **Guía Paso a Paso Integrada:**
+    Todas las recetas incluyen una lista clara de ingredientes y un proceso de preparación detallado, diseñados para facilitar la cocina saludable incluso para principiantes.

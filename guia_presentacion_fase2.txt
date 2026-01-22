@@ -1,0 +1,16 @@
+Puntos para la diapositiva: "Fase 2: Conexión Inteligente - Perfil, Macros y Recetas"
+
+*   **Ecosistema de Datos Unificado:**
+    La aplicación crea un "hilo digital" que conecta los datos biométricos del usuario (peso, altura, edad) ingresados en el Perfil directamente con el motor de cálculo de macros y el catálogo de recetas, eliminando la necesidad de configurar cada sección por separado.
+
+*   **Algoritmo de Nutrición de Precisión:**
+    Utilizando la fórmula Mifflin-St Jeor, el sistema transforma los datos del perfil en objetivos calóricos y de macronutrientes exactos (proteínas, grasas, carbohidratos), ajustados dinámicamente según el nivel de actividad y la meta seleccionada (Definición, Volumen o Mantenimiento).
+
+*   **Filtrado de Seguridad Activo:**
+    El módulo de recetas lee en tiempo real las restricciones del perfil. Si un usuario marca alergias (ej. Gluten, Lácteos) o preferencias (Vegano), la app bloquea automáticamente cualquier receta incompatible, garantizando una experiencia 100% segura sin esfuerzo manual.
+
+*   **Sincronización de Objetivos:**
+    Existe una coherencia total entre lo que el usuario "es" y lo que "come". El perfil define el objetivo (ej. Ganar masa muscular) y el sistema de recetas permite visualizar instantáneamente platos etiquetados con ese mismo fin, cerrando el ciclo entre la planificación y la ejecución.
+
+*   **Persistencia y Portabilidad:**
+    Gracias al almacenamiento local seguro, las preferencias y cálculos del usuario se guardan y recuperan instantáneamente en cada sesión, permitiendo incluso la exportación de planes de macros para un seguimiento externo.

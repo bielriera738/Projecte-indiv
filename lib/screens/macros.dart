@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:nutrivision_ai/services/exportarservicios.dart';
 
 class MacrosScreen extends StatefulWidget {
   const MacrosScreen({super.key});
@@ -19,6 +17,12 @@ class _MacrosScreenState extends State<MacrosScreen> {
   String resultado = "";
   bool _calculando = false;
   bool _exportando = false;
+
+  int? _calorias;
+  int? _proteinas;
+  int? _grasas;
+  int? _carbohidratos;
+  DateTime? _fechaCalculo;
 
   Future<void> calcular() async {
     if (_calculando) return;
@@ -70,6 +74,11 @@ class _MacrosScreenState extends State<MacrosScreen> {
           : carbohidratosG; // Evitar negativos
 
       setState(() {
+        _calorias = calorias;
+        _proteinas = proteinasG;
+        _grasas = grasasG;
+        _carbohidratos = carbohidratosG;
+        _fechaCalculo = DateTime.now();
         resultado =
             """
 Calorías: $calorias kcal
@@ -97,90 +106,173 @@ Carbohidratos: $carbohidratosG g
     }
   }
 
+  bool get _tieneMacrosCalculadas =>
+      _calorias != null &&
+      _proteinas != null &&
+      _grasas != null &&
+      _carbohidratos != null &&
+      pesoController.text.trim().isNotEmpty &&
+      alturaController.text.trim().isNotEmpty &&
+      edadController.text.trim().isNotEmpty;
+
+  String _formatearFecha(DateTime fecha) {
+    final dia = fecha.day.toString().padLeft(2, '0');
+    final mes = fecha.month.toString().padLeft(2, '0');
+    final anio = fecha.year;
+    final hora = fecha.hour.toString().padLeft(2, '0');
+    final min = fecha.minute.toString().padLeft(2, '0');
+    return '$dia/$mes/$anio $hora:$min';
+  }
+
+  String _buildCsvContent() {
+    final fecha = _fechaCalculo ?? DateTime.now();
+    final rows = <List<dynamic>>[
+      [
+        'Fecha',
+        'Peso (kg)',
+        'Altura (cm)',
+        'Edad',
+        'Objetivo',
+        'Calorías (kcal)',
+        'Proteínas (g)',
+        'Grasas (g)',
+        'Carbohidratos (g)'
+      ],
+      [
+        _formatearFecha(fecha),
+        pesoController.text.trim().replaceAll(',', '.'),
+        alturaController.text.trim().replaceAll(',', '.'),
+        edadController.text.trim(),
+        objetivo,
+        _calorias ?? '',
+        _proteinas ?? '',
+        _grasas ?? '',
+        _carbohidratos ?? '',
+      ],
+    ];
+    return ExportService.generateCsv(rows);
+  }
+
+  Future<void> _copiarCsvAlClipboard() async {
+    if (!_tieneMacrosCalculadas) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Primero calcula tus macros antes de copiar'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final csvContent = _buildCsvContent();
+    await Clipboard.setData(ClipboardData(text: csvContent));
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('CSV copiado al portapapeles'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> _copiarMacrosAlClipboard() async {
+    if (resultado.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay macros para copiar todavía'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final String texto = [
+      'Macros (NutriVision AI)',
+      'Fecha: ${(_fechaCalculo ?? DateTime.now()).toIso8601String()}',
+      'Peso: ${pesoController.text.trim()} kg',
+      'Altura: ${alturaController.text.trim()} cm',
+      'Edad: ${edadController.text.trim()}',
+      'Objetivo: $objetivo',
+      '',
+      resultado.trim(),
+    ].join('\n');
+
+    await Clipboard.setData(ClipboardData(text: texto));
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Macros copiados al portapapeles'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Future<void> exportarCSV() async {
     if (_exportando) return;
 
-    if (resultado.isEmpty || pesoController.text.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Primero calcula tus macros antes de exportar"),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+    if (!_tieneMacrosCalculadas) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Primero calcula tus macros antes de exportar'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
     try {
       setState(() => _exportando = true);
 
-      // Contenido del CSV para guardar
-      final csvContent = """Peso,Altura,Edad,Objetivo,Macros
-${pesoController.text},${alturaController.text},${edadController.text},$objetivo,"$resultado"
-""";
+      final csvContent = _buildCsvContent();
+      final fileName =
+          'macros_nutrivision_${DateTime.now().millisecondsSinceEpoch}.csv';
 
-      // Intentar obtener carpeta de documentos
-      Directory? directory;
-      if (Platform.isAndroid) {
-        directory = await getExternalStorageDirectory(); // Carpeta accesible en Android
-      } else if (Platform.isWindows) {
-        directory = await getDownloadsDirectory(); // Descargas en Windows
-      }
-      
-      // Fallback a documentos si los anteriores fallan
-      directory ??= await getApplicationDocumentsDirectory();
+      final savedPath = await ExportService.saveCSVStringWithPicker(
+        csvContent: csvContent,
+        suggestedFileName: fileName,
+      );
 
-      final String fileName = "macros_nutrivision_${DateTime.now().millisecondsSinceEpoch}.csv";
-      final String filePath = "${directory.path}/$fileName";
-      final File file = File(filePath);
-      await file.writeAsString(csvContent);
-
-      setState(() {
-        resultado = "$resultado\n\n✓ Archivo guardado en:\n$filePath";
-      });
-
-      // Intentar compartir el archivo (abre diálogo "Guardar en..." o compartir)
-      try {
-        await Share.shareXFiles(
-          [XFile(filePath)],
-          text: 'Mis Macros - NutriVision AI',
-          subject: 'Exportación de Macros',
-        );
-      } catch (e) {
-        debugPrint("No se pudo abrir el diálogo de compartir: $e");
-      }
-
-      if (mounted) {
+      if (savedPath == null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Archivo guardado en: $filePath"),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'COPIAR RUTA',
-              textColor: Colors.white,
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: filePath));
-              },
-            ),
+          const SnackBar(
+            content: Text('Exportación cancelada'),
+            backgroundColor: Colors.blueGrey,
           ),
         );
+        return;
       }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('CSV guardado en: $savedPath'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'COPIAR RUTA',
+            textColor: Colors.white,
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: savedPath));
+            },
+          ),
+        ),
+      );
     } catch (e) {
-      setState(() {
-        resultado = "Error al exportar: $e\n(Prueba reiniciar la app)";
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al exportar: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     } finally {
-      setState(() => _exportando = false);
+      if (mounted) setState(() => _exportando = false);
     }
   }
 
@@ -345,12 +437,9 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Icon(
-                                      Icons.file_upload,
-                                      color: Colors.white,
-                                    ),
+                                  : const Icon(Icons.save_alt, color: Colors.white),
                               label: Text(
-                                _exportando ? "..." : "Exportar",
+                                _exportando ? "..." : "Guardar CSV",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -418,19 +507,7 @@ ${pesoController.text},${alturaController.text},${edadController.text},$objetivo
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton.icon(
-                              onPressed: () {
-                                // copiar resultado al portapapeles
-                                if (resultado.isNotEmpty) {
-                                  // implementación simple sin paquete: mostrar SnackBar
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Resultado copiado (no implementado clipboard)",
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
+                              onPressed: _copiarMacrosAlClipboard,
                               icon: const Icon(Icons.copy, color: Colors.teal),
                               label: const Text(
                                 "Copiar",

@@ -1579,6 +1579,49 @@ class _RecetaDetailScreenState extends State<RecetaDetailScreen> {
     super.initState();
     baseGramos = _calcularGramosBase();
     gramosSeleccionados = baseGramos;
+    _guardarRecetaClickeada();
+  }
+
+  Future<void> _guardarRecetaClickeada() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final recetasJson = prefs.getString('recetas_clickeadas');
+      List<dynamic> recetas = [];
+      
+      if (recetasJson != null) {
+        recetas = jsonDecode(recetasJson) as List<dynamic>;
+      }
+      
+      // Verificar si ya existe esta receta (evitar duplicados)
+      final yaExiste = recetas.any((r) => 
+        r is Map<String, dynamic> && r['id'] == widget.receta.id);
+      
+      if (!yaExiste) {
+        final recetaData = {
+          'id': widget.receta.id,
+          'titulo': widget.receta.titulo,
+          'imagen': widget.receta.imagen,
+          'calorias': widget.receta.calorias,
+          'tiempo': widget.receta.tiempoPreparacion,
+          'categoria': widget.receta.categoria,
+          'proteinas': widget.receta.proteinas,
+          'carbohidratos': widget.receta.carbohidratos,
+          'grasas': widget.receta.grasas,
+          'fecha': DateTime.now().toIso8601String(),
+        };
+        
+        recetas.add(recetaData);
+        
+        // Mantener solo las últimas 20 recetas
+        if (recetas.length > 20) {
+          recetas = recetas.sublist(recetas.length - 20);
+        }
+        
+        await prefs.setString('recetas_clickeadas', jsonEncode(recetas));
+      }
+    } catch (e) {
+      debugPrint("Error guardando receta clickeada: $e");
+    }
   }
 
   double _calcularGramosBase() {

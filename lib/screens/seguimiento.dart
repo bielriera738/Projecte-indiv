@@ -18,6 +18,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   String _nombreUsuario = 'Usuario';
   bool _cargandoDatos = true;
   List<Map<String, dynamic>> _recetasPersonalizadas = [];
+  List<Map<String, dynamic>> _recetasClickeadas = [];
   List<Map<String, dynamic>> _historicoMacros = [];
   int _selectedTabIndex = 0;
 
@@ -113,6 +114,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       _cargarPerfil(),
       _cargarComidayDelDia(),
       _cargarRecetasPersonalizadas(),
+      _cargarRecetasClickeadas(),
       _cargarHistoricoMacros(),
     ]);
     if (mounted) {
@@ -230,6 +232,30 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     }
   }
 
+  Future<void> _cargarRecetasClickeadas() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final recetasJson = prefs.getString('recetas_clickeadas');
+
+      if (recetasJson != null) {
+        final recetasList = jsonDecode(recetasJson) as List<dynamic>? ?? [];
+        final recetas = <Map<String, dynamic>>[];
+
+        for (final receta in recetasList) {
+          if (receta is Map<String, dynamic>) {
+            recetas.add(receta);
+          }
+        }
+
+        if (mounted) {
+          setState(() => _recetasClickeadas = recetas.reversed.take(15).toList());
+        }
+      }
+    } catch (e) {
+      debugPrint("Error cargando recetas clickeadas: $e");
+    }
+  }
+
   Future<void> _cargarHistoricoMacros() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -337,6 +363,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
       setState(() => _alimentoSeleccionado = '');
 
       await _cargarComidayDelDia();
+      await _cargarHistoricoMacros();
       _mostrarMensaje("${alimento['nombre']} agregado", Colors.green);
     } catch (e) {
       _mostrarMensaje("Error: $e", Colors.red);
@@ -789,7 +816,9 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   }
 
   Widget _construirTabRecetas() {
-    if (_recetasPersonalizadas.isEmpty) {
+    final sinRecetas = _recetasPersonalizadas.isEmpty && _recetasClickeadas.isEmpty;
+    
+    if (sinRecetas) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -797,12 +826,12 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
             Icon(Icons.restaurant_menu, color: Colors.teal, size: 64),
             const SizedBox(height: 16),
             const Text(
-              "Sin recetas personalizadas",
+              "Sin recetas guardadas",
               style: TextStyle(color: Colors.black54, fontSize: 16),
             ),
             const SizedBox(height: 8),
             const Text(
-              "Solicita recetas en el chat para verlas aquí",
+              "Las recetas que veas se guardarán aquí",
               style: TextStyle(color: Colors.black38, fontSize: 13),
             ),
           ],
@@ -811,54 +840,163 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "RECETAS DEL CHAT",
-          style: TextStyle(
-            color: Colors.teal,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ..._recetasPersonalizadas.map((receta) {
-          return Card(
-            color: Colors.grey.shade100,
-            margin: const EdgeInsets.only(bottom: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    receta['titulo'] as String,
-                    style: const TextStyle(
-                      color: Colors.teal,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    (receta['contenido'] as String).length > 200
-                        ? "${(receta['contenido'] as String).substring(0, 200)}..."
-                        : receta['contenido'] as String,
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+        // Sección de recetas clickeadas/visitadas
+        if (_recetasClickeadas.isNotEmpty) ...[
+          const Text(
+            "RECETAS VISITADAS",
+            style: TextStyle(
+              color: Colors.teal,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
             ),
-          );
-        }),
+          ),
+          const SizedBox(height: 12),
+          ..._recetasClickeadas.map((receta) {
+            return Card(
+              color: Colors.grey.shade50,
+              margin: const EdgeInsets.only(bottom: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.teal.withOpacity(0.3), width: 1),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Text(
+                          receta['imagen'] as String? ?? '🍽️',
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            receta['titulo'] as String? ?? 'Receta',
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.local_fire_department, 
+                                color: Colors.orangeAccent, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${receta['calorias'] ?? 0} kcal',
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Icon(Icons.schedule, 
+                                color: Colors.blueGrey, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${receta['tiempo'] ?? 0} min',
+                                style: const TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        receta['categoria'] as String? ?? '',
+                        style: const TextStyle(
+                          color: Colors.teal,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 20),
+        ],
+        
+        // Sección de recetas del chat
+        if (_recetasPersonalizadas.isNotEmpty) ...[
+          const Text(
+            "RECETAS DEL CHAT",
+            style: TextStyle(
+              color: Colors.teal,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ..._recetasPersonalizadas.map((receta) {
+            return Card(
+              color: Colors.grey.shade100,
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      receta['titulo'] as String,
+                      style: const TextStyle(
+                        color: Colors.teal,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      (receta['contenido'] as String).length > 200
+                          ? "${(receta['contenido'] as String).substring(0, 200)}..."
+                          : receta['contenido'] as String,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ],
     );
   }

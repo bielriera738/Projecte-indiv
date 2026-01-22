@@ -1,21 +1,21 @@
 import 'package:flutter/services.dart';
+import 'package:csv/csv.dart';
+
+// Importación condicional para dart:io (no disponible en web)
+import 'exportarservicios_io.dart' if (dart.library.html) 'exportarservicios_web.dart' as platform;
 
 class ExportService {
+  /// Genera el contenido CSV de forma robusta (escapa comas/comillas/saltos).
+  static String generateCsv(List<List<dynamic>> data) {
+    return const ListToCsvConverter(eol: '\n').convert(data);
+  }
+
   /// Genera un CSV y lo copia al portapapeles.
   /// Compatible con Web, Windows, Android e iOS.
   static Future<String> exportToCSV(List<List<dynamic>> data, String fileName) async {
     try {
       // 1. Convertir datos a formato CSV
-      String csvData = data.map((row) {
-        return row.map((cell) {
-          String cellStr = cell?.toString() ?? "";
-          // Escapar celdas con comas, comillas o saltos de línea
-          if (cellStr.contains(',') || cellStr.contains('"') || cellStr.contains('\n')) {
-            cellStr = '"${cellStr.replaceAll('"', '""')}"';
-          }
-          return cellStr;
-        }).join(',');
-      }).join('\n');
+      final String csvData = generateCsv(data);
       
       // 2. Copiar al portapapeles
       await Clipboard.setData(ClipboardData(text: csvData));
@@ -34,5 +34,14 @@ class ExportService {
     } catch (e) {
       throw Exception("Error al exportar: $e");
     }
+  }
+
+  /// Guarda un CSV en una ubicación elegida por el usuario.
+  /// Devuelve la ruta guardada, o null si el usuario cancela.
+  static Future<String?> saveCSVStringWithPicker({
+    required String csvContent,
+    required String suggestedFileName,
+  }) async {
+    return platform.saveCSVFile(csvContent: csvContent, suggestedFileName: suggestedFileName);
   }
 }
